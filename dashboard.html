@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EarthChimp Marketplace Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+      padding: 32px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a202c;
+    }
+
+    header p {
+      margin-top: 6px;
+      font-size: 0.95rem;
+      color: #718096;
+    }
+
+    /* Marketplace Section */
+    .marketplace {
+      max-width: 1100px;
+      margin: 0 auto 56px;
+    }
+
+    .marketplace-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .marketplace-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1a202c;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #48bb78;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge.uk { background: #4299e1; }
+    .badge.de { background: #e53e3e; }
+
+    /* Cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 22px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-top: 4px solid #68d391;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card.uk { border-top-color: #63b3ed; }
+    .card.de { border-top-color: #fc8181; }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.11);
+    }
+
+    .card .variant {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #276749;
+      margin-bottom: 14px;
+    }
+
+    .card.uk .variant { color: #2b6cb0; }
+    .card.de .variant { color: #c53030; }
+
+    .card .stars {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .star-icons { color: #f6ad55; font-size: 1.1rem; letter-spacing: 1px; }
+
+    .rating-num { font-size: 1.4rem; font-weight: 700; color: #2d3748; }
+
+    .rating-max { font-size: 0.85rem; color: #a0aec0; }
+
+    .review-count { font-size: 0.9rem; color: #4a5568; margin-top: 4px; }
+
+    .review-count span { font-weight: 700; color: #2b6cb0; }
+
+    .card .url-link {
+      display: block;
+      margin-top: 10px;
+      font-size: 0.76rem;
+      color: #63b3ed;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .card .url-link:hover { text-decoration: underline; }
+
+    /* Summary Bar */
+    .summary {
+      border-radius: 14px;
+      padding: 28px 36px;
+      color: white;
+      box-shadow: 0 4px 20px rgba(39, 103, 73, 0.25);
+      background: linear-gradient(135deg, #276749, #48bb78);
+    }
+
+    .summary.uk {
+      background: linear-gradient(135deg, #2b4c7e, #4299e1);
+      box-shadow: 0 4px 20px rgba(43, 76, 126, 0.25);
+    }
+
+    .summary.de {
+      background: linear-gradient(135deg, #9b2c2c, #e53e3e);
+      box-shadow: 0 4px 20px rgba(155, 44, 44, 0.25);
+    }
+
+    .summary h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      opacity: 0.85;
+    }
+
+    .summary-stats { display: flex; gap: 48px; flex-wrap: wrap; }
+
+    .stat-block .label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      margin-bottom: 6px;
+    }
+
+    .stat-block .value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-block .sub {
+      font-size: 0.82rem;
+      opacity: 0.72;
+      margin-top: 4px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #a0aec0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>EarthChimp Product Dashboard</h1>
+    <p>Amazon Ratings &amp; Reviews &mdash; Scraped Live</p>
+  </header>
+
+  <!-- ===== US MARKETPLACE ===== -->
+  <div class="marketplace">
+    <div class="marketplace-header">
+      <h2>US Marketplace</h2>
+      <span class="badge">amazon.com</span>
+    </div>
+
+    <div class="cards-grid">
+
+      <div class="card">
+        <div class="variant">Chocolate</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.5</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>3,429</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.com/dp/B09S294TGM" target="_blank">amazon.com/dp/B09S294TGM</a>
+      </div>
+
+      <div class="card">
+        <div class="variant">Plain &amp; Unsweetened</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.39</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>344</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.com/dp/B09S2LSQ4D" target="_blank">amazon.com/dp/B09S2LSQ4D</a>
+        <a class="url-link" href="https://www.amazon.com/dp/B09S2G3ZPP" target="_blank">amazon.com/dp/B09S2G3ZPP</a>
+      </div>
+
+      <div class="card">
+        <div class="variant">Vanilla</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.5</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>2,503</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.com/dp/B09S27FV5F" target="_blank">amazon.com/dp/B09S27FV5F</a>
+      </div>
+
+    </div>
+
+    <div class="summary">
+      <h3>US EarthChimp &mdash; Overall Summary</h3>
+      <div class="summary-stats">
+        <div class="stat-block">
+          <div class="label">Weighted Average Rating</div>
+          <div class="value">4.5 &#9733;</div>
+          <div class="sub">out of 5 stars</div>
+        </div>
+        <div class="stat-block">
+          <div class="label">Total Customer Reviews</div>
+          <div class="value">6,276</div>
+          <div class="sub">across 3 variants</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UK MARKETPLACE ===== -->
+  <div class="marketplace">
+    <div class="marketplace-header">
+      <h2>UK Marketplace</h2>
+      <span class="badge uk">amazon.co.uk</span>
+    </div>
+
+    <div class="cards-grid">
+
+      <div class="card uk">
+        <div class="variant">Chocolate</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.4</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>1,621</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.co.uk/dp/B081VRSGWF" target="_blank">amazon.co.uk/dp/B081VRSGWF</a>
+        <a class="url-link" href="https://www.amazon.co.uk/dp/B07YV7Z931" target="_blank">amazon.co.uk/dp/B07YV7Z931</a>
+      </div>
+
+      <div class="card uk">
+        <div class="variant">Vanilla</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.5</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>1,724</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.co.uk/dp/B09S8VY9HY" target="_blank">amazon.co.uk/dp/B09S8VY9HY</a>
+        <a class="url-link" href="https://www.amazon.co.uk/dp/B09S8LT67H" target="_blank">amazon.co.uk/dp/B09S8LT67H</a>
+      </div>
+
+      <div class="card uk">
+        <div class="variant">Boho</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.5</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>1,018</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.co.uk/dp/B083XZXVX7" target="_blank">amazon.co.uk/dp/B083XZXVX7</a>
+        <a class="url-link" href="https://www.amazon.co.uk/dp/B07MQBK4W9" target="_blank">amazon.co.uk/dp/B07MQBK4W9</a>
+      </div>
+
+    </div>
+
+    <div class="summary uk">
+      <h3>UK EarthChimp &mdash; Overall Summary</h3>
+      <div class="summary-stats">
+        <div class="stat-block">
+          <div class="label">Weighted Average Rating</div>
+          <div class="value">4.5 &#9733;</div>
+          <div class="sub">out of 5 stars</div>
+        </div>
+        <div class="stat-block">
+          <div class="label">Total Customer Reviews</div>
+          <div class="value">4,363</div>
+          <div class="sub">across 3 variants</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DE MARKETPLACE ===== -->
+  <div class="marketplace">
+    <div class="marketplace-header">
+      <h2>DE Marketplace</h2>
+      <span class="badge de">amazon.de</span>
+    </div>
+
+    <div class="cards-grid">
+
+      <div class="card de">
+        <div class="variant">Power Blend</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.4</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>3,233</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.de/dp/B079TP1P3V" target="_blank">amazon.de/dp/B079TP1P3V</a>
+      </div>
+
+      <div class="card de">
+        <div class="variant">Boho</div>
+        <div class="stars">
+          <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.4</span>
+          <span class="rating-max">/ 5</span>
+        </div>
+        <div class="review-count"><span>983</span> ratings</div>
+        <a class="url-link" href="https://www.amazon.de/dp/B07MQBK4W9" target="_blank">amazon.de/dp/B07MQBK4W9</a>
+      </div>
+
+    </div>
+
+    <div class="summary de">
+      <h3>DE EarthChimp &mdash; Overall Summary</h3>
+      <div class="summary-stats">
+        <div class="stat-block">
+          <div class="label">Weighted Average Rating</div>
+          <div class="value">4.4 &#9733;</div>
+          <div class="sub">out of 5 stars</div>
+        </div>
+        <div class="stat-block">
+          <div class="label">Total Customer Reviews</div>
+          <div class="value">4,216</div>
+          <div class="sub">across 2 variants</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Data sourced from Amazon.com, Amazon.co.uk &amp; Amazon.de &nbsp;&middot;&nbsp; EarthChimp Marketplace Dashboard
+  </footer>
+
+</body>
+</html>
