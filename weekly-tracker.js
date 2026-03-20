@@ -145,10 +145,10 @@ function fmt(n) { return n.toLocaleString('en-US'); }
 function wtd(n) { return n >= 0 ? `+${fmt(n)}` : `${fmt(n)}`; }
 
 async function main() {
-  const today = new Date().toLocaleDateString('en-PH', {
-    timeZone: 'Asia/Manila',
-    dateStyle: 'full',
-  });
+  const now = new Date();
+  const today = now.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'full' });
+  const todayISO = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }))
+    .toISOString().split('T')[0];
 
   console.log(`\nUS Marketplace — Week-to-Date Review Tracker`);
   console.log(`Date       : ${today}`);
@@ -156,6 +156,7 @@ async function main() {
   console.log('='.repeat(62));
 
   const totals = { total: { b: 0, c: 0 }, positive: { b: 0, c: 0 }, negative: { b: 0, c: 0 } };
+  const products = [];
 
   for (const url of TRACKING_URLS) {
     try {
@@ -171,17 +172,43 @@ async function main() {
       totals.total.b    += r.total.baseline;    totals.total.c    += r.total.current;
       totals.positive.b += r.positive.baseline; totals.positive.c += r.positive.current;
       totals.negative.b += r.negative.baseline; totals.negative.c += r.negative.current;
+
+      products.push({
+        asin: r.asin,
+        variant: r.variant,
+        starPct: r.starPct,
+        total:    r.total,
+        positive: r.positive,
+        negative: r.negative,
+      });
     } catch (err) {
       console.error(`\nFailed for ${url}: ${err.message}`);
     }
   }
 
+  const summary = {
+    total:    { baseline: totals.total.b,    current: totals.total.c,    wtd: totals.total.c    - totals.total.b },
+    positive: { baseline: totals.positive.b, current: totals.positive.c, wtd: totals.positive.c - totals.positive.b },
+    negative: { baseline: totals.negative.b, current: totals.negative.c, wtd: totals.negative.c - totals.negative.b },
+  };
+
   console.log('\n' + '='.repeat(62));
   console.log(`\nUS TOTAL — Week-to-Date Summary`);
   console.log(`          ${'Baseline (Mon)'.padEnd(18)}${'Current'.padEnd(14)}WTD`);
-  console.log(`Total     : ${fmt(totals.total.b).padEnd(18)}${fmt(totals.total.c).padEnd(14)}${wtd(totals.total.c - totals.total.b)}`);
-  console.log(`Positive  : ${fmt(totals.positive.b).padEnd(18)}${fmt(totals.positive.c).padEnd(14)}${wtd(totals.positive.c - totals.positive.b)}  (4-5★)`);
-  console.log(`Negative  : ${fmt(totals.negative.b).padEnd(18)}${fmt(totals.negative.c).padEnd(14)}${wtd(totals.negative.c - totals.negative.b)}  (1-3★)\n`);
+  console.log(`Total     : ${fmt(summary.total.baseline).padEnd(18)}${fmt(summary.total.current).padEnd(14)}${wtd(summary.total.wtd)}`);
+  console.log(`Positive  : ${fmt(summary.positive.baseline).padEnd(18)}${fmt(summary.positive.current).padEnd(14)}${wtd(summary.positive.wtd)}  (4-5★)`);
+  console.log(`Negative  : ${fmt(summary.negative.baseline).padEnd(18)}${fmt(summary.negative.current).padEnd(14)}${wtd(summary.negative.wtd)}  (1-3★)\n`);
+
+  // Save results to weekly-report.json for dashboard display
+  const report = {
+    scrapedAt: today,
+    scrapedDate: todayISO,
+    weekStart: getMondayDate(),
+    products,
+    summary,
+  };
+  fs.writeFileSync(path.join(__dirname, 'weekly-report.json'), JSON.stringify(report, null, 2), 'utf8');
+  console.log(`Report saved to weekly-report.json`);
 }
 
 main().catch(err => {
