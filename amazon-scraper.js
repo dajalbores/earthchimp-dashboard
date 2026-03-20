@@ -90,6 +90,39 @@ async function getAmazonProductInfo(url) {
   return { ...raw, variant, url };
 }
 
+// --- Merge/rename variants after grouping ---
+// rules: array of { match: string[], label: string }
+// Variants whose names include any match string are merged into one entry with the given label.
+// Unmatched variants pass through unchanged.
+function remapVariants(variants, rules) {
+  const result = [];
+  const used = new Set();
+
+  for (const rule of rules) {
+    const matched = variants.filter(v =>
+      rule.match.some(m => v.variant.toLowerCase().includes(m.toLowerCase()))
+    );
+    if (matched.length === 0) continue;
+
+    const totalCount = matched.reduce((sum, v) => sum + v.count, 0);
+    const weightedSum = matched.reduce((sum, v) => sum + v.rating * v.count, 0);
+    result.push({
+      variant: rule.label,
+      urls: matched.flatMap(v => v.urls),
+      count: totalCount,
+      rating: totalCount > 0 ? weightedSum / totalCount : 0,
+    });
+    matched.forEach(v => used.add(v.variant.toLowerCase()));
+  }
+
+  // Pass through variants not covered by any rule
+  for (const v of variants) {
+    if (!used.has(v.variant.toLowerCase())) result.push(v);
+  }
+
+  return result;
+}
+
 // --- Group products by variant name, combining ratings/counts ---
 function groupByVariant(products) {
   const groups = {};
@@ -462,6 +495,16 @@ async function main() {
     const usData  = await scrapeGroup(US_URLS, 'US EarthChimp');
     const ukData  = await scrapeGroup(UK_URLS, 'UK EarthChimp');
     const deData  = await scrapeGroup(DE_URLS, 'DE EarthChimp');
+
+    // UK: merge Chocolate + Vanilla → EarthChamp; keep Boho separate
+    ukData.variants = remapVariants(ukData.variants, [
+      { match: ['chocolate', 'vanilla'], label: 'EarthChamp' },
+    ]);
+
+    // DE: rename Power Blend → EarthChamp
+    deData.variants = remapVariants(deData.variants, [
+      { match: ['power blend'], label: 'EarthChamp' },
+    ]);
 
     const marketplaces = [
       { title: 'US Marketplace', badge: 'amazon.com',    cssClass: '',   summaryLabel: 'US EarthChimp', data: usData },
