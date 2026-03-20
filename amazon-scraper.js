@@ -465,7 +465,7 @@ async function main() {
 
     const marketplaces = [
       { title: 'US Marketplace', badge: 'amazon.com',    cssClass: '',   summaryLabel: 'US EarthChimp', data: usData },
-      { title: 'UK Marketplace', badge: 'amazon.co.uk',  cssClass: 'uk', summaryLabel: 'UK EarthChimp', data: ukData },
+      { title: 'UK Marketplace', badge: 'amazon.co.uk',  cssClass: 'uk', summaryLabel: 'UK EarthChamp', data: ukData },
       { title: 'DE Marketplace', badge: 'amazon.de',     cssClass: 'de', summaryLabel: 'DE EarthChimp', data: deData },
     ];
 
