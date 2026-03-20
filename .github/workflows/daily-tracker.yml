@@ -35,6 +35,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add baselines.json weekly-report.json
+          git add baselines.json weekly-report.json last-week-summary.json index.html
           git diff --cached --quiet || git commit -m "chore: daily tracker update $(date +'%Y-%m-%d')"
           git push

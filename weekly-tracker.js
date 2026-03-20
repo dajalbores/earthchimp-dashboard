@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const BASELINES_PATH = path.join(__dirname, 'baselines.json');
+const LAST_WEEK_SUMMARY_PATH = path.join(__dirname, 'last-week-summary.json');
 
 // US products to track
 const TRACKING_URLS = [
@@ -46,6 +47,66 @@ function saveBaselines(data) {
 function extractAsin(url) {
   const match = url.match(/\/dp\/([A-Z0-9]{10})/);
   return match ? match[1] : url;
+}
+
+function loadLastWeekSummary() {
+  if (!fs.existsSync(LAST_WEEK_SUMMARY_PATH)) return { weekStart: '', total: 0, rating: '4.5', currentRating: '4.5' };
+  return JSON.parse(fs.readFileSync(LAST_WEEK_SUMMARY_PATH, 'utf8'));
+}
+
+function saveLastWeekSummary(data) {
+  fs.writeFileSync(LAST_WEEK_SUMMARY_PATH, JSON.stringify(data, null, 2), 'utf8');
+}
+
+// Compute overall weighted average rating from scraped products array
+function computeWeightedRating(products) {
+  let totalReviews = 0;
+  let weightedSum = 0;
+  for (const p of products) {
+    const tc = p.total.current;
+    if (!tc) continue;
+    const avg = (5 * p.starPct[5] + 4 * p.starPct[4] + 3 * p.starPct[3] + 2 * p.starPct[2] + 1 * p.starPct[1]) / 100;
+    weightedSum += avg * tc;
+    totalReviews += tc;
+  }
+  if (!totalReviews) return '4.5';
+  return (weightedSum / totalReviews).toFixed(1);
+}
+
+// Inject US summary stat blocks into dashboard (between <!-- US_SUMMARY_START/END --> markers)
+function updateDashboardSummary(lastWeek, currentTotal, currentRating, productCount) {
+  const indexPath = path.join(__dirname, 'index.html');
+  if (!fs.existsSync(indexPath)) return;
+
+  const delta = currentTotal - (lastWeek.total || 0);
+  const deltaStr = delta >= 0 ? `+${delta.toLocaleString('en-US')}` : `${delta.toLocaleString('en-US')}`;
+  const lastWeekRating = lastWeek.rating || '4.5';
+  const lastWeekTotal = (lastWeek.total || 0).toLocaleString('en-US');
+
+  const summaryHtml = `<!-- US_SUMMARY_START -->
+        <div class="stat-block">
+          <div class="label">Weighted Average Rating</div>
+          <div class="value">${currentRating} &#9733;</div>
+          <div class="sub">out of 5 stars</div>
+          <div class="stat-last-week">Last week &nbsp;${lastWeekRating} &#9733;</div>
+        </div>
+        <div class="stat-block">
+          <div class="label">Total Customer Reviews</div>
+          <div class="value-row">
+            <span class="value">${currentTotal.toLocaleString('en-US')}</span>
+            <span class="stat-delta">${deltaStr}</span>
+          </div>
+          <div class="sub">across ${productCount} variants</div>
+          <div class="stat-last-week">Last week &nbsp;${lastWeekTotal} reviews</div>
+        </div>
+        <!-- US_SUMMARY_END -->`;
+
+  let html = fs.readFileSync(indexPath, 'utf8');
+  if (html.includes('<!-- US_SUMMARY_START -->')) {
+    html = html.replace(/<!-- US_SUMMARY_START -->[\s\S]*?<!-- US_SUMMARY_END -->/m, summaryHtml);
+    fs.writeFileSync(indexPath, html, 'utf8');
+    console.log('Dashboard US summary updated.');
+  }
 }
 
 // --- Scraper ---
@@ -144,6 +205,121 @@ async function trackProduct(url) {
 function fmt(n) { return n.toLocaleString('en-US'); }
 function wtd(n) { return n >= 0 ? `+${fmt(n)}` : `${fmt(n)}`; }
 
+// --- Inject WTD section into dashboard ---
+function updateDashboardWTD(report) {
+  const indexPath = path.join(__dirname, 'index.html');
+  if (!fs.existsSync(indexPath)) return;
+
+  const { weekStart, scrapedAt, products, summary } = report;
+
+  const rowsHtml = products.map(p => `
+        <tr>
+          <td>${p.variant}</td>
+          <td class="num">${wtd(p.total.wtd)}</td>
+          <td class="num pos">${wtd(p.positive.wtd)}</td>
+          <td class="num neg">${wtd(p.negative.wtd)}</td>
+        </tr>`).join('');
+
+  const wtdHtml = `<!-- WTD_START -->
+  <div class="marketplace wtd-section">
+    <div class="marketplace-header">
+      <h2>US — Week-to-Date Reviews</h2>
+      <span class="badge wtd-badge">Since Mon ${weekStart}</span>
+    </div>
+    <table class="wtd-table">
+      <thead>
+        <tr>
+          <th>Variant</th>
+          <th>WTD Total</th>
+          <th>Positive &#9733;&#9733;&#9733;&#9733;&#9733; (4-5★)</th>
+          <th>Negative &#9734;&#9734;&#9734; (1-3★)</th>
+        </tr>
+      </thead>
+      <tbody>
+${rowsHtml}
+        <tr class="wtd-total-row">
+          <td><strong>TOTAL</strong></td>
+          <td class="num"><strong>${wtd(summary.total.wtd)}</strong></td>
+          <td class="num pos"><strong>${wtd(summary.positive.wtd)}</strong></td>
+          <td class="num neg"><strong>${wtd(summary.negative.wtd)}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="wtd-note">Last updated: ${scrapedAt} (PHT)</p>
+  </div>
+  <!-- WTD_END -->`;
+
+  const wtdStyles = `
+    /* WTD Section */
+    .wtd-section { margin-bottom: 56px; }
+
+    .badge.wtd-badge { background: #805ad5; }
+
+    .wtd-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .wtd-table th {
+      background: #2d3748;
+      color: white;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .wtd-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.95rem;
+      color: #2d3748;
+    }
+
+    .wtd-table tr:last-child td { border-bottom: none; }
+
+    .wtd-table tr:hover td { background: #f7fafc; }
+
+    .wtd-table .num { text-align: right; font-weight: 600; font-size: 1rem; }
+
+    .wtd-table .pos { color: #276749; }
+    .wtd-table .neg { color: #c53030; }
+
+    .wtd-total-row td {
+      background: #f0f4f8;
+      font-size: 1rem;
+    }
+
+    .wtd-note {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: #a0aec0;
+      text-align: right;
+    }`;
+
+  let html = fs.readFileSync(indexPath, 'utf8');
+
+  // Inject styles once (before </style>)
+  if (!html.includes('/* WTD Section */')) {
+    html = html.replace('  </style>', wtdStyles + '\n  </style>');
+  }
+
+  // Replace existing WTD section or insert before UK marketplace
+  if (html.includes('<!-- WTD_START -->')) {
+    html = html.replace(/<!-- WTD_START -->[\s\S]*?<!-- WTD_END -->/m, wtdHtml);
+  } else {
+    html = html.replace('<!-- ===== UK MARKETPLACE =====', wtdHtml + '\n\n  <!-- ===== UK MARKETPLACE =====');
+  }
+
+  fs.writeFileSync(indexPath, html, 'utf8');
+  console.log('Dashboard updated with WTD section.');
+}
+
 async function main() {
   const now = new Date();
   const today = now.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'full' });
@@ -154,6 +330,19 @@ async function main() {
   console.log(`Date       : ${today}`);
   console.log(`Week of    : ${getMondayDate()}\n`);
   console.log('='.repeat(62));
+
+  // On Monday, snapshot old baselines before they get overwritten
+  let prevTotal = 0;
+  let prevWeekStart = null;
+  if (isMonday()) {
+    const oldBaselines = loadBaselines();
+    for (const url of TRACKING_URLS) {
+      const asin = extractAsin(url);
+      if (oldBaselines[asin]) prevTotal += oldBaselines[asin].totalCount || 0;
+    }
+    const firstKey = Object.keys(oldBaselines)[0];
+    if (firstKey) prevWeekStart = oldBaselines[firstKey].weekStart;
+  }
 
   const totals = { total: { b: 0, c: 0 }, positive: { b: 0, c: 0 }, negative: { b: 0, c: 0 } };
   const products = [];
@@ -208,7 +397,31 @@ async function main() {
     summary,
   };
   fs.writeFileSync(path.join(__dirname, 'weekly-report.json'), JSON.stringify(report, null, 2), 'utf8');
-  console.log(`Report saved to weekly-report.json`);
+  console.log('Report saved to weekly-report.json');
+
+  updateDashboardWTD(report);
+
+  // Update US summary panel (current totals + last-week comparison)
+  const currentRating = computeWeightedRating(products);
+  const currentTotal = summary.total.current;
+  const lastWeek = loadLastWeekSummary();
+
+  if (isMonday() && prevTotal > 0) {
+    // Promote this week's snapshot to "last week" and start fresh
+    const newLastWeek = {
+      weekStart: prevWeekStart || lastWeek.weekStart,
+      total: prevTotal,
+      rating: lastWeek.currentRating || lastWeek.rating,
+      currentRating,
+    };
+    saveLastWeekSummary(newLastWeek);
+    updateDashboardSummary(newLastWeek, currentTotal, currentRating, products.length);
+  } else {
+    // Not Monday — just refresh current rating; keep last-week values unchanged
+    const updated = { ...lastWeek, currentRating };
+    saveLastWeekSummary(updated);
+    updateDashboardSummary(updated, currentTotal, currentRating, products.length);
+  }
 }
 
 main().catch(err => {

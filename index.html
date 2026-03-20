@@ -179,11 +179,87 @@
       margin-top: 4px;
     }
 
+    .stat-block .value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .stat-delta {
+      font-size: 1rem;
+      font-weight: 700;
+      background: #0f3320;
+      color: #fff;
+      padding: 2px 9px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+    }
+
+    .stat-last-week {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      opacity: 0.42;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
     footer {
       text-align: center;
       margin-top: 16px;
       font-size: 0.8rem;
       color: #a0aec0;
+    }
+
+    /* WTD Section */
+    .wtd-section { margin-bottom: 56px; }
+
+    .badge.wtd-badge { background: #805ad5; }
+
+    .wtd-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .wtd-table th {
+      background: #2d3748;
+      color: white;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .wtd-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.95rem;
+      color: #2d3748;
+    }
+
+    .wtd-table tr:last-child td { border-bottom: none; }
+
+    .wtd-table tr:hover td { background: #f7fafc; }
+
+    .wtd-table .num { text-align: right; font-weight: 600; font-size: 1rem; }
+
+    .wtd-table .pos { color: #276749; }
+    .wtd-table .neg { color: #c53030; }
+
+    .wtd-total-row td {
+      background: #f0f4f8;
+      font-size: 1rem;
+    }
+
+    .wtd-note {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: #a0aec0;
+      text-align: right;
     }
   </style>
 </head>
@@ -242,19 +318,79 @@
     <div class="summary">
       <h3>US EarthChimp &mdash; Overall Summary</h3>
       <div class="summary-stats">
+        <!-- US_SUMMARY_START -->
         <div class="stat-block">
           <div class="label">Weighted Average Rating</div>
           <div class="value">4.5 &#9733;</div>
           <div class="sub">out of 5 stars</div>
+          <div class="stat-last-week">Last week &nbsp;4.5 &#9733;</div>
         </div>
         <div class="stat-block">
           <div class="label">Total Customer Reviews</div>
-          <div class="value">6,276</div>
-          <div class="sub">across 3 variants</div>
+          <div class="value-row">
+            <span class="value">6,276</span>
+            <span class="stat-delta">+25</span>
+          </div>
+          <div class="sub">across 4 variants</div>
+          <div class="stat-last-week">Last week &nbsp;6,251 reviews</div>
         </div>
+        <!-- US_SUMMARY_END -->
       </div>
     </div>
   </div>
+
+  <!-- WTD_START -->
+  <div class="marketplace wtd-section">
+    <div class="marketplace-header">
+      <h2>US — Week-to-Date Reviews</h2>
+      <span class="badge wtd-badge">Since Mon 2026-03-15</span>
+    </div>
+    <table class="wtd-table">
+      <thead>
+        <tr>
+          <th>Variant</th>
+          <th>WTD Total</th>
+          <th>Positive &#9733;&#9733;&#9733;&#9733;&#9733; (4-5★)</th>
+          <th>Negative &#9734;&#9734;&#9734; (1-3★)</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td>Unknown</td>
+          <td class="num">+0</td>
+          <td class="num pos">+0</td>
+          <td class="num neg">+0</td>
+        </tr>
+        <tr>
+          <td>Unknown</td>
+          <td class="num">+0</td>
+          <td class="num pos">+0</td>
+          <td class="num neg">+0</td>
+        </tr>
+        <tr>
+          <td>Unknown</td>
+          <td class="num">+0</td>
+          <td class="num pos">+0</td>
+          <td class="num neg">+0</td>
+        </tr>
+        <tr>
+          <td>Unknown</td>
+          <td class="num">+0</td>
+          <td class="num pos">+0</td>
+          <td class="num neg">+0</td>
+        </tr>
+        <tr class="wtd-total-row">
+          <td><strong>TOTAL</strong></td>
+          <td class="num"><strong>+0</strong></td>
+          <td class="num pos"><strong>+0</strong></td>
+          <td class="num neg"><strong>+0</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="wtd-note">Last updated: Saturday, March 21, 2026 (PHT)</p>
+  </div>
+  <!-- WTD_END -->
 
   <!-- ===== UK MARKETPLACE ===== -->
   <div class="marketplace">
