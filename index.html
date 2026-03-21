@@ -290,6 +290,94 @@
       color: #a0aec0;
       text-align: right;
     }
+
+    /* ── Tabs ── */
+    .tabs-nav {
+      max-width: 1100px;
+      margin: -16px auto 36px;
+      display: flex;
+      gap: 4px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 11px 28px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #718096;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      border-radius: 6px 6px 0 0;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+
+    .tab-btn:hover { color: #2d3748; background: #f7fafc; }
+    .tab-btn.active { color: #276749; border-bottom-color: #276749; background: none; }
+
+    /* ── Reviews Tab ── */
+    .reviews-section {
+      max-width: 1400px;
+      margin: 0 auto 56px;
+    }
+
+    .reviews-table-wrap {
+      overflow-x: auto;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .reviews-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      min-width: 1000px;
+    }
+
+    .reviews-table th {
+      background: #2d3748;
+      color: white;
+      padding: 13px 14px;
+      text-align: left;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    .reviews-table td {
+      padding: 13px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.88rem;
+      color: #2d3748;
+      vertical-align: top;
+    }
+
+    .reviews-table tr:last-child td { border-bottom: none; }
+    .reviews-table tr:hover td { background: #f7fafc; }
+    .reviews-table .rev-neg td { background: #fff5f5; }
+    .reviews-table .rev-neg:hover td { background: #fed7d7; }
+
+    .td-stars { white-space: nowrap; color: #f6ad55; font-size: 1rem; letter-spacing: 1px; }
+    .td-stars .empty { color: #e2e8f0; }
+    .td-verbatim { max-width: 400px; line-height: 1.55; color: #4a5568; font-size: 0.84rem; }
+    .td-nowrap { white-space: nowrap; }
+
+    .action-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .act-great   { background: #c6f6d5; color: #276749; }
+    .act-refund  { background: #fefcbf; color: #744210; }
+    .act-contact { background: #fed7d7; color: #c53030; }
   </style>
 </head>
 <body>
@@ -298,6 +386,13 @@
     <h1>EarthChimp Product Dashboard</h1>
     <p>Amazon Ratings &amp; Reviews &mdash; Scraped Live</p>
   </header>
+
+  <div class="tabs-nav">
+    <button class="tab-btn active" data-tab="dashboard" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" data-tab="reviews" onclick="showTab('reviews')">Reviews</button>
+  </div>
+
+  <div id="tab-dashboard" class="tab-panel">
 
   <!-- ===== US MARKETPLACE ===== -->
   <div class="marketplace">
@@ -558,6 +653,238 @@
   <footer>
     Data sourced from Amazon.com, Amazon.co.uk &amp; Amazon.de &nbsp;&middot;&nbsp; EarthChimp Marketplace Dashboard
   </footer>
+
+  </div><!-- /tab-dashboard -->
+
+  <!-- ===== REVIEWS TAB ===== -->
+  <div id="tab-reviews" class="tab-panel" style="display:none">
+
+    <div class="reviews-section">
+      <div class="marketplace-header">
+        <h2>US Marketplace &mdash; Customer Reviews</h2>
+        <span class="badge">amazon.com</span>
+        <span style="font-size:0.8rem;color:#718096;margin-left:8px">Pages 1&ndash;2 of 10 &nbsp;&middot;&nbsp; 14 reviews &nbsp;&middot;&nbsp; Captured Mar 21, 2026</span>
+      </div>
+
+      <div class="reviews-table-wrap">
+        <table class="reviews-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Stars</th>
+              <th>Reviewer</th>
+              <th>Date</th>
+              <th>Child ASIN</th>
+              <th>Flavor</th>
+              <th>Size</th>
+              <th>Scoop</th>
+              <th>Action</th>
+              <th>Verbatim</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr class="rev-neg">
+              <td>1</td>
+              <td class="td-stars">&#9733;&#9733;<span class="empty">&#9733;&#9733;&#9733;</span></td>
+              <td class="td-nowrap">Nissi</td>
+              <td class="td-nowrap">Mar 18</td>
+              <td class="td-nowrap">B07BBTQ7T9</td>
+              <td>Chocolate</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td><span class="action-badge act-refund">Offer Courtesy Refund</span></td>
+              <td class="td-verbatim">"It looks like there's some really great ingredients but it's not chocolatey it's kind of nasty."</td>
+            </tr>
+
+            <tr class="rev-neg">
+              <td>2</td>
+              <td class="td-stars">&#9733;<span class="empty">&#9733;&#9733;&#9733;&#9733;</span></td>
+              <td class="td-nowrap">Charlee Wise</td>
+              <td class="td-nowrap">Mar 18</td>
+              <td class="td-nowrap">B07BBTQ7T9</td>
+              <td>Chocolate</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td><span class="action-badge act-contact">Contact Customer</span></td>
+              <td class="td-verbatim">"This is one of the worst tasting and textured protein powders I have tried. I used a blender to try to attempt a smoother texture, but it is still so gritty and chalky that I was never able to drink an entire serving without giving up and pouring it out. The chocolate flavor is severely lacking."</td>
+            </tr>
+
+            <tr>
+              <td>3</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Mic</td>
+              <td class="td-nowrap">Mar 18</td>
+              <td class="td-nowrap">B07HCGMWFL</td>
+              <td>Vanilla</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td><span class="action-badge act-great">Great job!</span></td>
+              <td class="td-verbatim">"Fantastic stuff! Works well, and tastes good, especially for a vegan protein powder with probiotics. We've been buying this stuff for years, and are still doing so."</td>
+            </tr>
+
+            <tr>
+              <td>4</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Martin</td>
+              <td class="td-nowrap">Mar 18</td>
+              <td class="td-nowrap">B07BBTQ7T9</td>
+              <td>Chocolate</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td><span class="action-badge act-great">Great job!</span></td>
+              <td class="td-verbatim">"Absolutely delicious!! And never have liked any protein powder. Similar taste to Kachava and much better price!"</td>
+            </tr>
+
+            <tr>
+              <td>5</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Adirondack Native</td>
+              <td class="td-nowrap">Mar 17</td>
+              <td class="td-nowrap">B07HCGMWFL</td>
+              <td>Vanilla</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"If you are looking for a good source of protein, to supplement your regular daily protein or just as additional intake, you can't go wrong with this product. A friend suggested we try this after trying various other protein powders and we are so glad we took the suggestion. We did a 1 time order just to see if we liked it and it was delivered the very next day. Since we drink a smoothie every morning, we decided to give it a go in the next smoothie. Up until this point, we had tried various protein powders and none of them hit the mark of a good flavor, texture etc. The Earth Chimp Natural Vanilla completely exceeded our expectations. (disclaimer, neither of us are vegan or vegetarian) I immediately ordered another bag to make sure we didn't run out, and signed up for the subscribe and save option so definitely we won't run out. We appreciate the sustainability option of ordering the protein bags without the scoop and once we have several scoops saved, we will switch to that subscribe and save option instead of having the powder shipped with the scoop every month. Many thanks to Earth Chimp for such a great product at a great price and perhaps I'll look you up in Dublin on our next trip to Ireland!"</td>
+            </tr>
+
+            <tr>
+              <td>6</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Maryanne C</td>
+              <td class="td-nowrap">Mar 16</td>
+              <td class="td-nowrap">B07HCGMWFL</td>
+              <td>Vanilla</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"I was looking for a protein powder without a lot of weird chemicals and artificial sweeteners - and I found it. I love this protein powder! I got the vanilla. The flavor is rich and full - not artificial and not too sweet. The texture is nicely thick but drinkable. I have it for breakfast and I'm amazed at how much it fills me up. The sweetness in other protein drinks seems to spike my blood sugar, but this one keeps me level and satisfied. Definitely 5 stars."</td>
+            </tr>
+
+            <tr>
+              <td>7</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Kristina</td>
+              <td class="td-nowrap">Mar 14</td>
+              <td class="td-nowrap">B07BBTQ7T9</td>
+              <td>Chocolate</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"Excellent protein powder, I am on my third bag of this stuff! I love the plain &amp; unsweetened version the most. The texture is creamy (just be sure to put the powder on top of your liquid before mixing for best texture results, not before the liquid) and I have zero tummy issues from consuming it regularly. I love that it doesn't have any artificial flavoring or chemical weirdness in it!!! The founder is exceptionally customer service oriented and responsive. I put my roommate into it too. Great stuff."</td>
+            </tr>
+
+            <tr>
+              <td>8</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;<span class="empty">&#9733;</span></td>
+              <td class="td-nowrap">Erin G.</td>
+              <td class="td-nowrap">Mar 14</td>
+              <td class="td-nowrap">B07HCGMWFL</td>
+              <td>Vanilla</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"Aside from the exorbitant price for such an underwhelming amount of product, the shake really was pretty awesome. There was a disclaimer on back about the &ldquo;texture,&rdquo; but it was almost nonexistent like the chalky texture of Vega or other supposed comparable protein powders. The taste was actually good - not just edible but actually desirable for a flavor. (I got vanilla, btw) I didn't even get any real after taste, either, which was the best part. The vanilla wasn't super sacron sweet and artificial, either. It was subdued but still apparent. I decided to just halve the daily serving to cut down on costs and calories/sodium so it works out either way."</td>
+            </tr>
+
+            <tr>
+              <td>9</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">MG</td>
+              <td class="td-nowrap">Mar 14</td>
+              <td class="td-nowrap">B09S2BDWX6</td>
+              <td>Vanilla</td>
+              <td>4 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"Yay! Love it. Makes me a little gassy, but a lot less than the other vegan options on the market. I'm not vegan but this is a great option for a natural, simple ingredient shake. I usually make my smoothie with 2 scoops, water, 1 cup blueberries, and 3 cups leafy greens. Easier to digest, will make you feel good. One thing... it's pretty pricey. Mind boggling that healthier options are more expensive than processed. Worth the spend though, your body with thank you."</td>
+            </tr>
+
+            <tr class="rev-neg">
+              <td>10</td>
+              <td class="td-stars">&#9733;<span class="empty">&#9733;&#9733;&#9733;&#9733;</span></td>
+              <td class="td-nowrap">Katrina Sagert</td>
+              <td class="td-nowrap">Mar 13</td>
+              <td class="td-nowrap">B09S296G44</td>
+              <td>Chocolate</td>
+              <td>4 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"The bag punctured in route. I bought the large size so that's an expensive design flaw."</td>
+            </tr>
+
+            <tr>
+              <td>11</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Mary W.</td>
+              <td class="td-nowrap">Mar 13</td>
+              <td class="td-nowrap">B09S2B4H52</td>
+              <td>Chocolate</td>
+              <td>4 lb</td>
+              <td>no scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"This is the best protein drink! My husband and are both really enjoy the benefits and the flavors!"</td>
+            </tr>
+
+            <tr>
+              <td>12</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Renee Miami</td>
+              <td class="td-nowrap">Mar 13</td>
+              <td class="td-nowrap">B07BBTQ7T9</td>
+              <td>Chocolate</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"After trying many different vegan protein brands I have found one that finally fully meets my criteria for a healthy and clean product. The chocolate flavor is delicious and I really appreciate that this product is low in calories, low in carbs, but still high enough in protein. I have found it satisfying both mixed quickly as a drink and also making a smoothie and adding some PB2 with it. I can't wait to try another flavor!!"</td>
+            </tr>
+
+            <tr>
+              <td>13</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Amanda</td>
+              <td class="td-nowrap">Mar 12</td>
+              <td class="td-nowrap">B07BBTQ7T9</td>
+              <td>Chocolate</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"So good. Im allergic to dairy and it's so nice to finally have a protein shake that doesnt taste awful. I add a frozen banana and some almond milk in my Ninja blender."</td>
+            </tr>
+
+            <tr>
+              <td>14</td>
+              <td class="td-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+              <td class="td-nowrap">Liz Donoghue</td>
+              <td class="td-nowrap">Mar 11</td>
+              <td class="td-nowrap">B088C2PDVF</td>
+              <td>Plain &amp; Unsweetened</td>
+              <td>2 lb</td>
+              <td>w/ scoop</td>
+              <td>&mdash;</td>
+              <td class="td-verbatim">"I got this to help me up my protein intake following surgery. I wanted a plain protein that I couldn't taste and could add to a variety of things. I scooped some into an a&ccedil;a&iacute; bowl this morning and even without blending, it mixed in very nicely! I couldn't taste it or feel any texture from it. Also, no stomach ache after which I've noticed from other protein powders. I'm happy to have found a clean protein powder that I like!"</td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      Data sourced from Amazon.com, Amazon.co.uk &amp; Amazon.de &nbsp;&middot;&nbsp; EarthChimp Marketplace Dashboard
+    </footer>
+
+  </div><!-- /tab-reviews -->
+
+  <script>
+    function showTab(name) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).style.display = '';
+      document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+    }
+  </script>
 
 </body>
 </html>
