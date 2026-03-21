@@ -766,7 +766,7 @@
       for(var i=0;i<data.length;i++){
         var r = data[i];
         html += '<tr onclick="rvOpenModal('+r.id+')">'
-          +'<td style="color:#a0aec0;font-size:.76rem">'+r.id+'</td>'
+          +'<td style="color:#a0aec0;font-size:.76rem">'+(i+1)+'</td>'
           +'<td><div class="rv-reviewer">'+r.reviewer+'</div><div class="rv-date">'+rvFmtDate(r.date)+'</div></td>'
           +'<td><span class="rv-stars">'+rvStarStr(r.stars)+'</span></td>'
           +'<td><div class="rv-title">'+r.title+'</div><div class="rv-body">'+r.body+'</div></td>'
