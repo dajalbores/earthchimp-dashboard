@@ -641,7 +641,6 @@
 
     <div class="rv-wrap">
       <div class="rv-mkt-bar">
-        <button class="rv-mkt-btn active" onclick="rvSetMarket('ALL')">All</button>
         <button class="rv-mkt-btn" onclick="rvSetMarket('US')">US</button>
         <button class="rv-mkt-btn" onclick="rvSetMarket('UK')">UK</button>
         <button class="rv-mkt-btn" onclick="rvSetMarket('DE')">DE</button>
@@ -751,9 +750,9 @@
     var rvMarket = 'ALL';
 
     function rvSetMarket(mkt){
-      rvMarket = mkt;
+      rvMarket = (rvMarket === mkt) ? 'ALL' : mkt;
       document.querySelectorAll('.rv-mkt-btn').forEach(function(b){
-        b.classList.toggle('active', b.textContent === mkt || (mkt==='ALL' && b.textContent==='All'));
+        b.classList.toggle('active', b.textContent === rvMarket);
       });
       rvRender();
     }
