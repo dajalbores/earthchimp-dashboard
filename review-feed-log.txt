@@ -1,0 +1,52 @@
+[dotenv@17.3.1] injecting env (3) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+
+US Marketplace — WTD Review Feed (Seller Central)
+Date       : Saturday, March 21, 2026
+Since      : Monday 2026-03-15
+
+==============================================================
+  Checking session...
+  Not logged in — signing in now...
+  Navigating to sign-in...
+  Screenshot: debug-login-1.png
+  URL: https://sellercentral.amazon.com/sign-in
+  IdP selector detected — clicking Amazon/Seller Central login...
+  Screenshot: debug-login-1b.png (after IdP selection)
+  URL after IdP select: https://sellercentral.amazon.com/ap/signin?clientContext=131-0980871-4163901&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fsellercentral.amazon.com%2Fgp%2Fsign-in%2Fwelcome.html%3Fmons_idp_issuer%3DAuthPortal%26mons_idp_client_id%3Dsc_na_amazon_v2&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=sc_na_amazon_v2&openid.mode=checkid_setup&language=en_US&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&pageId=sc_amazon_v3_unified&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&ssoResponse=eyJ6aXAiOiJERUYiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0.CahalixeQyblSdyumwPR7YLRLeKnN7AWQc_EXX4y_TmdnRcbfbaLOA.AmRddhp7WaRnzhkR.LbIzRCmzFoyH3MJMtgJq6dQRdcQ8_euxxLCLgqI8xsVOQkocqisQqr4Gf8NCb5MQEUClca43sW5_xScP42FD8UqE82uYKGZXfxFNaMtBypdFN1LrW20xVXo8VME38GaY87oaRLcDtCb2TOH6oYetbfk9PWOori5obPadrYkY-B3JCLs9NYSoiiN9mkfU0w6Ymdi1Dfm1.GKQQNX6c_rJU8C-RIgUBAw
+  Waiting for login form...
+  URL: https://sellercentral.amazon.com/ap/signin?clientContext=131-0980871-4163901&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fsellercentral.amazon.com%2Fgp%2Fsign-in%2Fwelcome.html%3Fmons_idp_issuer%3DAuthPortal%26mons_idp_client_id%3Dsc_na_amazon_v2&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=sc_na_amazon_v2&openid.mode=checkid_setup&language=en_US&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&pageId=sc_amazon_v3_unified&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&ssoResponse=eyJ6aXAiOiJERUYiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0.CahalixeQyblSdyumwPR7YLRLeKnN7AWQc_EXX4y_TmdnRcbfbaLOA.AmRddhp7WaRnzhkR.LbIzRCmzFoyH3MJMtgJq6dQRdcQ8_euxxLCLgqI8xsVOQkocqisQqr4Gf8NCb5MQEUClca43sW5_xScP42FD8UqE82uYKGZXfxFNaMtBypdFN1LrW20xVXo8VME38GaY87oaRLcDtCb2TOH6oYetbfk9PWOori5obPadrYkY-B3JCLs9NYSoiiN9mkfU0w6Ymdi1Dfm1.GKQQNX6c_rJU8C-RIgUBAw
+  Midway user_name field found: false
+  Midway not detected — trying standard ap/signin...
+  ap_email field found: false
+  Screenshot: debug-login-2.png (after standard login)
+  URL: https://sellercentral.amazon.com/ap/mfa?ie=UTF8&arb=9f61e0c7-9c66-4e7e-bfb3-a07cdcafa005&mfa.arb.value=9f61e0c7-9c66-4e7e-bfb3-a07cdcafa005&mfa.arb.key=arb
+
+
+  ==========================================================
+  *** 2FA REQUIRED — CHECK YOUR BROWSER WINDOW NOW ***
+  Enter the OTP/verification code in the browser.
+  Waiting up to 3 minutes...
+  ==========================================================
+
+  Screenshot: debug-login-3.png (after 2FA)
+  Final URL: https://sellercentral.amazon.com/home
+  Login successful.
+
+  Navigating to Brand Customer Reviews...
+  Found 10 reviews on page 1
+
+Saved to review-feed.json
+
+==============================================================
+Tracked products (since Monday):
+  Chocolate (B09S294TGM): +0 positive, -0 negative
+  Plain & Unsweetened (B09S2LSQ4D): +0 positive, -0 negative
+  Plain & Unsweetened (2) (B09S2G3ZPP): +0 positive, -0 negative
+  Vanilla (B09S27FV5F): +0 positive, -0 negative
+
+Brand reviews found this week (all ASINs):
+  B07HCGMWFL: +2 / -0
+    5★ Adirondack Native (March 17, 2026): You have to try this!
+    5★ Maryanne C (March 16, 2026): Natural, tasty, and filling!
+
+Closing browser in 5 seconds...

@@ -9,7 +9,7 @@ const path = require('path');
 // Load .env for local use; in GitHub Actions the secret is injected directly
 require('dotenv').config();
 const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY || 'c595fd63c5eae8f8edd9d570631860e1';
-const DASHBOARD_PATH = path.join(__dirname, 'index.html');
+const DASHBOARD_PATH = path.join(__dirname, '..', 'index.html');
 
 // --- Axios scraper for Amazon US ---
 async function scrapeWithAxios(url) {

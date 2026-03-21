@@ -1,3 +1,5 @@
 node_modules/
 .env
 scraper-log.txt
+.sc-cookies.json
+review-feed.json

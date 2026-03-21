@@ -12,6 +12,7 @@ const path = require('path');
 
 const BASELINES_PATH = path.join(__dirname, 'baselines.json');
 const LAST_WEEK_SUMMARY_PATH = path.join(__dirname, 'last-week-summary.json');
+const INDEX_PATH = path.join(__dirname, '..', 'index.html');
 
 // US products to track
 const TRACKING_URLS = [
@@ -75,7 +76,7 @@ function computeWeightedRating(products) {
 
 // Inject US summary stat blocks into dashboard (between <!-- US_SUMMARY_START/END --> markers)
 function updateDashboardSummary(lastWeek, currentTotal, currentRating, productCount) {
-  const indexPath = path.join(__dirname, 'index.html');
+  const indexPath = INDEX_PATH;
   if (!fs.existsSync(indexPath)) return;
 
   const delta = currentTotal - (lastWeek.total || 0);
@@ -207,7 +208,7 @@ function wtd(n) { return n >= 0 ? `+${fmt(n)}` : `${fmt(n)}`; }
 
 // --- Inject WTD section into dashboard ---
 function updateDashboardWTD(report) {
-  const indexPath = path.join(__dirname, 'index.html');
+  const indexPath = INDEX_PATH;
   if (!fs.existsSync(indexPath)) return;
 
   const { weekStart, scrapedAt, products, summary } = report;
@@ -398,8 +399,6 @@ async function main() {
   };
   fs.writeFileSync(path.join(__dirname, 'weekly-report.json'), JSON.stringify(report, null, 2), 'utf8');
   console.log('Report saved to weekly-report.json');
-
-  updateDashboardWTD(report);
 
   // Update US summary panel (current totals + last-week comparison)
   const currentRating = computeWeightedRating(products);

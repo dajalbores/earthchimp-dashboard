@@ -29,12 +29,12 @@ jobs:
       - name: Run weekly tracker
         env:
           SCRAPER_API_KEY: ${{ secrets.SCRAPER_API_KEY }}
-        run: node weekly-tracker.js
+        run: node "Review Reports/weekly-tracker.js"
 
       - name: Commit updated report and baselines
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add baselines.json weekly-report.json last-week-summary.json index.html
+          git add "Review Reports/baselines.json" "Review Reports/weekly-report.json" "Review Reports/last-week-summary.json" index.html
           git diff --cached --quiet || git commit -m "chore: daily tracker update $(date +'%Y-%m-%d')"
           git push
