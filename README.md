@@ -1,6 +1,6 @@
 # EarthChimp Marketplace Dashboard
 
-Automated dashboard that tracks Amazon product ratings and customer reviews across the US, UK, and DE marketplaces. Updates daily and publishes to Netlify.
+An automated monitoring and reporting pipeline that scrapes Amazon product ratings daily, tracks week-over-week changes, and publishes a live dashboard — with a manual review intake workflow for Seller Central customer reviews across the US, UK, and DE marketplaces.
 
 ---
 
