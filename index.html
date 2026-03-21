@@ -320,6 +320,10 @@
 
     /* ── Reviews Tab ── */
     .rv-wrap{max-width:1200px;margin:0 auto;padding:24px 20px}
+    .rv-mkt-bar{display:flex;gap:8px;margin-bottom:14px}
+    .rv-mkt-btn{padding:7px 22px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#718096;font-size:.84rem;font-weight:600;cursor:pointer;transition:all .15s}
+    .rv-mkt-btn:hover{border-color:#52b788;color:#2d6a4f}
+    .rv-mkt-btn.active{background:#52b788;border-color:#52b788;color:#fff}
     .rv-filters{background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
     .rv-filters select,.rv-filters input{border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:.84rem;color:#2d3748;background:#f7fafc;outline:none}
     .rv-filters select:focus,.rv-filters input:focus{border-color:#52b788}
@@ -636,6 +640,13 @@
   <div id="tab-reviews" class="tab-panel" style="display:none">
 
     <div class="rv-wrap">
+      <div class="rv-mkt-bar">
+        <button class="rv-mkt-btn active" onclick="rvSetMarket('ALL')">All</button>
+        <button class="rv-mkt-btn" onclick="rvSetMarket('US')">US</button>
+        <button class="rv-mkt-btn" onclick="rvSetMarket('UK')">UK</button>
+        <button class="rv-mkt-btn" onclick="rvSetMarket('DE')">DE</button>
+      </div>
+
       <div class="rv-filters">
         <select id="rvFStars">
           <option value="">All Ratings</option>
@@ -693,21 +704,48 @@
     }
 
     var reviews = [
-      {id:1,reviewer:"Adirondack Native",date:"2026-03-17",stars:5,title:"You have to try this!",body:"If you are looking for a good source of protein, to supplement your regular daily protein or just as additional intake, you can't go wrong with this product.\n\nA friend suggested we try this after trying various other protein powders and we are so glad we took the suggestion. We did a 1 time order just to see if we liked it and it was delivered the very next day. Since we drink a smoothie every morning, we decided to give it a go in the next smoothie. Up until this point, we had tried various protein powders and none of them hit the mark of a good flavor, texture etc. The Earth Chimp Natural Vanilla completely exceeded our expectations. (disclaimer, neither of us are vegan or vegetarian) I immediately ordered another bag to make sure we didn't run out, and signed up for the subscribe and save option so definitely we won't run out.\n\nWe appreciate the sustainability option of ordering the protein bags without the scoop and once we have several scoops saved, we will switch to that subscribe and save option instead of having the powder shipped with the scoop every month.\n\nMany thanks to Earth Chimp for such a great product at a great price and perhaps I'll look you up in Dublin on our next trip to Ireland!",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
-      {id:2,reviewer:"Maryanne C",date:"2026-03-16",stars:5,title:"Natural, tasty, and filling!",body:"I was looking for a protein powder without a lot of weird chemicals and artificial sweeteners - and I found it. I love this protein powder! I got the vanilla. The flavor is rich and full - not artificial and not too sweet. The texture is nicely thick but drinkable. I have it for breakfast and I'm amazed at how much it fills me up. The sweetness in other protein drinks seems to spike my blood sugar, but this one keeps me level and satisfied. Definitely 5 stars.",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
-      {id:3,reviewer:"Kristina",date:"2026-03-14",stars:5,title:"Exceptional Texture, Taste, Company",body:"Excellent protein powder, I am on my third bag of this stuff! I love the plain & unsweetened version the most. The texture is creamy (just be sure to put the powder on top of your liquid before mixing for best texture results, not before the liquid) and I have zero tummy issues from consuming it regularly. I love that it doesn't have any artificial flavoring or chemical weirdness in it!!! The founder is exceptionally customer service oriented and responsive. I put my roommate into it too. Great stuff.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"},
-      {id:4,reviewer:"Erin G.",date:"2026-03-14",stars:4,title:"Naturally tasty flavor/no aftertaste",body:"Aside from the exorbitant price for such an underwhelming amount of product, the shake really was pretty awesome. There was a disclaimer on back about the \"texture,\" but it was almost nonexistent like the chalky texture of Vega or other supposed comparable protein powders. The taste was actually good- not just edible but actually desirable for a flavor. (I got vanilla, btw) I didn't even get any real after taste, either, which was the best part. The vanilla wasn't super sacron sweet and artificial, either. It was subdued but still apparent. I decided to just halve the daily serving to cut down on costs and calories/sodium so it works out either way.",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
-      {id:5,reviewer:"MG",date:"2026-03-14",stars:5,title:"Worth it",body:"Yay! Love it. Makes me a little gassy, but a lot less than the other vegan options on the market. I'm not vegan but this is a great option for a natural, simple ingredient shake. I usually make my smoothie with 2 scoops, water, 1 cup blueberries, and 3 cups leafy greens. Easier to digest, will make you feel good. One thing... it's pretty pricey. Mind boggling that healthier options are more expensive than processed. Worth the spend though, your body with thank you.",product:"Vanilla 64 Oz",childAsin:"B09S2BDWX6",actionStatus:"positive"},
-      {id:6,reviewer:"Katrina Sagert",date:"2026-03-13",stars:1,title:"Bag ripped",body:"The bag punctured in route. I bought the large size so that's an expensive design flaw.",product:"Chocolate 64 Oz",childAsin:"B09S296G44",actionStatus:"contacted"},
-      {id:7,reviewer:"Mary W.",date:"2026-03-13",stars:5,title:"Tasty and Nutritious Drink!",body:"This is the best protein drink! My husband and are both really enjoy the benefits and the flavors!",product:"Chocolate No Scoop 64 Oz",childAsin:"B09S2B4H52",actionStatus:"positive"},
-      {id:8,reviewer:"Renee Miami",date:"2026-03-13",stars:5,title:"Delicious, Nutritious, Clean, & Great for Macros",body:"After trying many different vegan protein brands I have found one that finally fully meets my criteria for a healthy and clean product. The chocolate flavor is delicious and I really appreciate that this product is low in calories, low in carbs, but still high enough in protein. I have found it satisfying both mixed quickly as a drink and also making a smoothie and adding some PB2 with it. I can't wait to try another flavor!!",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"},
-      {id:9,reviewer:"Amanda",date:"2026-03-12",stars:5,title:"Yummy",body:"So good. Im allergic to dairy and it's so nice to finally have a protein shake that doesnt taste awful. I add a frozen banana and some almond milk in my Ninja blender.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"},
-      {id:10,reviewer:"Liz Donoghue",date:"2026-03-11",stars:5,title:"Unflavored, mixed nicely",body:"I got this to help me up my protein intake following surgery. I wanted a plain protein that I couldn't taste and could add to a variety of things. I scooped some into an açaí bowl this morning and even without blending, it mixed in very nicely! I couldn't taste it or feel any texture from it. Also, no stomach ache after which I've noticed from other protein powders. I'm happy to have found a clean protein powder that I like!",product:"Plain & Unsweetened 32 Oz",childAsin:"B088C2PDVF",actionStatus:"positive"},
-      {id:11,reviewer:"Nissi",date:"2026-03-18",stars:2,title:"Not that great",body:"It looks like there's some really great ingredients but it's not chocolatey it's kind of nasty.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"refund"},
-      {id:12,reviewer:"Charlee Wise",date:"2026-03-18",stars:1,title:"Don't waste your money!",body:"This is one of the worst tasting and textured protein powders I have tried. I used a blender to try to attempt a smoother texture, but it is still so gritty and chalky that I was never able to drink an entire serving without giving up and pouring it out. The chocolate flavor is severely lacking.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"contact"},
-      {id:13,reviewer:"Mic",date:"2026-03-18",stars:5,title:"An excellent and high quality source of protein powder",body:"Fantastic stuff! Works well, and tastes good, especially for a vegan protein powder with probiotics. We've been buying this stuff for years, and are still doing so.",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
-      {id:14,reviewer:"Martin",date:"2026-03-18",stars:5,title:"Absolutely delicious!",body:"Absolutely delicious!! And never have liked any protein powder. Similar taste to Kachava and much better price!",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"}
+      {id:1,marketplace:"US",reviewer:"Adirondack Native",date:"2026-03-17",stars:5,title:"You have to try this!",body:"If you are looking for a good source of protein, to supplement your regular daily protein or just as additional intake, you can't go wrong with this product.\n\nA friend suggested we try this after trying various other protein powders and we are so glad we took the suggestion. We did a 1 time order just to see if we liked it and it was delivered the very next day. Since we drink a smoothie every morning, we decided to give it a go in the next smoothie. Up until this point, we had tried various protein powders and none of them hit the mark of a good flavor, texture etc. The Earth Chimp Natural Vanilla completely exceeded our expectations. (disclaimer, neither of us are vegan or vegetarian) I immediately ordered another bag to make sure we didn't run out, and signed up for the subscribe and save option so definitely we won't run out.\n\nWe appreciate the sustainability option of ordering the protein bags without the scoop and once we have several scoops saved, we will switch to that subscribe and save option instead of having the powder shipped with the scoop every month.\n\nMany thanks to Earth Chimp for such a great product at a great price and perhaps I'll look you up in Dublin on our next trip to Ireland!",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
+      {id:2,marketplace:"US",reviewer:"Maryanne C",date:"2026-03-16",stars:5,title:"Natural, tasty, and filling!",body:"I was looking for a protein powder without a lot of weird chemicals and artificial sweeteners - and I found it. I love this protein powder! I got the vanilla. The flavor is rich and full - not artificial and not too sweet. The texture is nicely thick but drinkable. I have it for breakfast and I'm amazed at how much it fills me up. The sweetness in other protein drinks seems to spike my blood sugar, but this one keeps me level and satisfied. Definitely 5 stars.",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
+      {id:3,marketplace:"US",reviewer:"Kristina",date:"2026-03-14",stars:5,title:"Exceptional Texture, Taste, Company",body:"Excellent protein powder, I am on my third bag of this stuff! I love the plain & unsweetened version the most. The texture is creamy (just be sure to put the powder on top of your liquid before mixing for best texture results, not before the liquid) and I have zero tummy issues from consuming it regularly. I love that it doesn't have any artificial flavoring or chemical weirdness in it!!! The founder is exceptionally customer service oriented and responsive. I put my roommate into it too. Great stuff.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"},
+      {id:4,marketplace:"US",reviewer:"Erin G.",date:"2026-03-14",stars:4,title:"Naturally tasty flavor/no aftertaste",body:"Aside from the exorbitant price for such an underwhelming amount of product, the shake really was pretty awesome. There was a disclaimer on back about the \"texture,\" but it was almost nonexistent like the chalky texture of Vega or other supposed comparable protein powders. The taste was actually good- not just edible but actually desirable for a flavor. (I got vanilla, btw) I didn't even get any real after taste, either, which was the best part. The vanilla wasn't super sacron sweet and artificial, either. It was subdued but still apparent. I decided to just halve the daily serving to cut down on costs and calories/sodium so it works out either way.",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
+      {id:5,marketplace:"US",reviewer:"MG",date:"2026-03-14",stars:5,title:"Worth it",body:"Yay! Love it. Makes me a little gassy, but a lot less than the other vegan options on the market. I'm not vegan but this is a great option for a natural, simple ingredient shake. I usually make my smoothie with 2 scoops, water, 1 cup blueberries, and 3 cups leafy greens. Easier to digest, will make you feel good. One thing... it's pretty pricey. Mind boggling that healthier options are more expensive than processed. Worth the spend though, your body with thank you.",product:"Vanilla 64 Oz",childAsin:"B09S2BDWX6",actionStatus:"positive"},
+      {id:6,marketplace:"US",reviewer:"Katrina Sagert",date:"2026-03-13",stars:1,title:"Bag ripped",body:"The bag punctured in route. I bought the large size so that's an expensive design flaw.",product:"Chocolate 64 Oz",childAsin:"B09S296G44",actionStatus:"contacted"},
+      {id:7,marketplace:"US",reviewer:"Mary W.",date:"2026-03-13",stars:5,title:"Tasty and Nutritious Drink!",body:"This is the best protein drink! My husband and are both really enjoy the benefits and the flavors!",product:"Chocolate No Scoop 64 Oz",childAsin:"B09S2B4H52",actionStatus:"positive"},
+      {id:8,marketplace:"US",reviewer:"Renee Miami",date:"2026-03-13",stars:5,title:"Delicious, Nutritious, Clean, & Great for Macros",body:"After trying many different vegan protein brands I have found one that finally fully meets my criteria for a healthy and clean product. The chocolate flavor is delicious and I really appreciate that this product is low in calories, low in carbs, but still high enough in protein. I have found it satisfying both mixed quickly as a drink and also making a smoothie and adding some PB2 with it. I can't wait to try another flavor!!",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"},
+      {id:9,marketplace:"US",reviewer:"Amanda",date:"2026-03-12",stars:5,title:"Yummy",body:"So good. Im allergic to dairy and it's so nice to finally have a protein shake that doesnt taste awful. I add a frozen banana and some almond milk in my Ninja blender.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"},
+      {id:10,marketplace:"US",reviewer:"Liz Donoghue",date:"2026-03-11",stars:5,title:"Unflavored, mixed nicely",body:"I got this to help me up my protein intake following surgery. I wanted a plain protein that I couldn't taste and could add to a variety of things. I scooped some into an açaí bowl this morning and even without blending, it mixed in very nicely! I couldn't taste it or feel any texture from it. Also, no stomach ache after which I've noticed from other protein powders. I'm happy to have found a clean protein powder that I like!",product:"Plain & Unsweetened 32 Oz",childAsin:"B088C2PDVF",actionStatus:"positive"},
+      {id:11,marketplace:"US",reviewer:"Nissi",date:"2026-03-18",stars:2,title:"Not that great",body:"It looks like there's some really great ingredients but it's not chocolatey it's kind of nasty.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"refund"},
+      {id:12,marketplace:"US",reviewer:"Charlee Wise",date:"2026-03-18",stars:1,title:"Don't waste your money!",body:"This is one of the worst tasting and textured protein powders I have tried. I used a blender to try to attempt a smoother texture, but it is still so gritty and chalky that I was never able to drink an entire serving without giving up and pouring it out. The chocolate flavor is severely lacking.",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"contact"},
+      {id:13,marketplace:"US",reviewer:"Mic",date:"2026-03-18",stars:5,title:"An excellent and high quality source of protein powder",body:"Fantastic stuff! Works well, and tastes good, especially for a vegan protein powder with probiotics. We've been buying this stuff for years, and are still doing so.",product:"Vanilla 32 Oz",childAsin:"B07HCGMWFL",actionStatus:"positive"},
+      {id:14,marketplace:"US",reviewer:"Martin",date:"2026-03-18",stars:5,title:"Absolutely delicious!",body:"Absolutely delicious!! And never have liked any protein powder. Similar taste to Kachava and much better price!",product:"Chocolate 32 Oz",childAsin:"B07BBTQ7T9",actionStatus:"positive"}
     ];
+
+    // Deduplicate: if reviewer+date+title already exists, replace it with the newer entry
+    (function(){
+      var seen = {};
+      var deduped = [];
+      for(var i=0;i<reviews.length;i++){
+        var key = reviews[i].reviewer+'|'+reviews[i].date+'|'+reviews[i].title;
+        if(seen[key]!==undefined){
+          console.warn('Duplicate review replaced: "'+reviews[i].title+'" by '+reviews[i].reviewer);
+          deduped[seen[key]] = reviews[i];
+        } else {
+          seen[key] = deduped.length;
+          deduped.push(reviews[i]);
+        }
+      }
+      reviews = deduped;
+    })();
+
+    var rvMarket = 'ALL';
+
+    function rvSetMarket(mkt){
+      rvMarket = mkt;
+      document.querySelectorAll('.rv-mkt-btn').forEach(function(b){
+        b.classList.toggle('active', b.textContent === mkt || (mkt==='ALL' && b.textContent==='All'));
+      });
+      rvRender();
+    }
 
     var AL = {positive:'Great job!', contact:'Contact Customer', contacted:'Contacted Customer', refund:'Courtesy Refund'};
     var AC = {positive:'rv-pos', contact:'rv-contact', contacted:'rv-con', refund:'rv-ref'};
@@ -740,6 +778,7 @@
       var result = [];
       for(var i=0;i<reviews.length;i++){
         var r = reviews[i];
+        var mktOk  = rvMarket==='ALL' || r.marketplace===rvMarket;
         var starOk = !fStars
           || (fStars==='positive' && r.stars>=4)
           || (fStars==='negative' && r.stars<=3);
@@ -749,7 +788,7 @@
           || r.reviewer.toLowerCase().indexOf(fSearch)>-1
           || r.title.toLowerCase().indexOf(fSearch)>-1
           || r.body.toLowerCase().indexOf(fSearch)>-1;
-        if(starOk && prodOk && actionOk && searchOk) result.push(r);
+        if(mktOk && starOk && prodOk && actionOk && searchOk) result.push(r);
       }
       result.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
       return result;

@@ -1,0 +1,184 @@
+================================================================================
+AMAZON REVIEWS EXPORT
+================================================================================
+
+--------------------------------------------------------------------------------
+Review #1
+--------------------------------------------------------------------------------
+Reviewer      : Jack
+Date          : 18 March 2026
+Rating        : 5/5
+Title         : Favourite protein powder
+Body          : Keep coming back to this, the best! (vanilla only)
+Brand         : EarthChamp
+Parent ASIN   : B0DKCW5ZJL
+Child ASIN    : B09S8VY9HY
+Product       : Vegan Protein Powder (No Scoop Included) 2kg – Vanilla
+Prod. Rating  : 3.5 (219 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #2
+--------------------------------------------------------------------------------
+Reviewer      : Shanshan33
+Date          : 17 March 2026
+Rating        : 4/5
+Title         : Brilliant
+Body          : So many positives to this protein powder for me... Every protein
+                powder I have ever tried that is vegan or dairy free etc has
+                irritated my stomach. This hasn't, zero tummy irritation, no
+                graininess, super smooth, it does the job in helping with my
+                protein intake, no clumps. The one less star is just the natural
+                sweetener, I can... [View more]
+Brand         : EarthChamp
+Parent ASIN   : B0DKCW5ZJL
+Child ASIN    : B07GR9YY6X
+Product       : Vegan Protein Powder (1kg) – 28 Servings – Vanilla
+Prod. Rating  : 4.5 (1506 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #3
+--------------------------------------------------------------------------------
+Reviewer      : PVL
+Date          : 17 March 2026
+Rating        : 5/5
+Title         : The best vegan protein: best value & great quality!
+Body          : EarthChamp vegan protein is the best vanilla and chocolate
+                flavours I've had by far. While flavours come down to personal
+                preference, I consider EarthChamp's flavour profiles quite
+                balanced. They aren't overly sweet which is often the case for
+                many other brands. They don't have weird funny smell – sometimes
+                I find... [View more]
+Brand         : EarthChamp
+Parent ASIN   : B0DKCW5ZJL
+Child ASIN    : B07GR9YY6X
+Product       : Vegan Protein Powder (1kg) – 28 Servings – Vanilla
+Prod. Rating  : 4.5 (1506 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #4
+--------------------------------------------------------------------------------
+Reviewer      : Amazon Customer
+Date          : 16 March 2026
+Rating        : 5/5
+Title         : Will buy again
+Body          : Taste great
+Brand         : Farmer Pete's
+Parent ASIN   : B08YNZSWM5
+Child ASIN    : B08YNZSWM5
+Product       : Farmer Pete's Pea Protein Powder 1kg – Dairy Free, Gluten-Free,
+                Natural Plant Based Vegan Protein Powder Isolate
+Prod. Rating  : 4.5 (482 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #5
+--------------------------------------------------------------------------------
+Reviewer      : Anna Biavati
+Date          : 16 March 2026
+Rating        : 5/5
+Title         : Great taste
+Body          : Describe that is incredible doesn't have anything bad in it and
+                it doesn't taste bad at all considering that his vegan would
+                thoroughly recommend and we use it all the time
+Brand         : EarthChamp
+Parent ASIN   : B0DKCW5ZJL
+Child ASIN    : B083XNP5H1
+Product       : Vegan Protein Powder (No Scoop Included) 1kg – Vanilla
+Prod. Rating  : 3.5 (219 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #6
+--------------------------------------------------------------------------------
+Reviewer      : Armaan Malik
+Date          : 13 March 2026
+Rating        : 5/5
+Title         : Not sickly sweet best tasting protein
+Body          : Best tasting protein now disgustingly sweet and easy on the
+                stomach (I have ulcerative colitis) this is the only one that
+                does not mess my stomach up and is not sickly sweet
+Brand         : EarthChamp
+Parent ASIN   : B0DKCW5ZJL
+Child ASIN    : B081VRSGWF
+Product       : Vegan Protein Powder (No Scoop Included) 1kg – Chocolate
+Prod. Rating  : 4.5 (279 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #7
+--------------------------------------------------------------------------------
+Reviewer      : Country Girl
+Date          : 12 March 2026
+Rating        : 4/5
+Title         : Bit of a strange flavour to it
+Body          : Deducting one star as it does have a slightly strange taste to it
+                rather than being unflavoured as product claims. I actually
+                thought it was pea protein powder but it's a combination of
+                different proteins. I personally wouldn't buy it again but
+                that's just me, I'll go back to buying pure pea protein.
+Brand         : BOHO
+Parent ASIN   : B0DHTTF9Z1
+Child ASIN    : B083XZXVX7
+Product       : Boho Unflavoured Organic Vegan Protein Powder Blend (1kg)
+Prod. Rating  : 4.5 (120 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #8
+--------------------------------------------------------------------------------
+Reviewer      : E Blackmore
+Date          : 12 March 2026
+Rating        : 5/5
+Title         : Best vegan protein!
+Body          : I love this stuff! Tried it on a whim as it was highly rated and
+                it's now my go to. I find vegan protein often tastes like chalky
+                metal because of the sweeteners, but this is very balanced.
+                Mixed well with milk and water and very affordable. I'm about to
+                order my second bag.
+Brand         : EarthChamp
+Parent ASIN   : B0DKCW5ZJL
+Child ASIN    : B079TP1P3V
+Product       : Vegan Protein Powder (1kg) – 28 Servings – Chocolate
+Prod. Rating  : 4.5 (1348 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #9
+--------------------------------------------------------------------------------
+Reviewer      : Heather Love
+Date          : 12 March 2026
+Rating        : 5/5
+Title         : Buy this, you won't regret it!
+Body          : Great price for 1kg! Smells and tastes amazing! ... [View more]
+Brand         : EarthChamp
+Parent ASIN   : B0DKCW5ZJL
+Child ASIN    : B07GR9YY6X
+Product       : Vegan Protein Powder (1kg) – 28 Servings – Vanilla
+Prod. Rating  : 4.5 (1506 reviews)
+Status        : Well done! Reply not needed
+
+--------------------------------------------------------------------------------
+Review #10
+--------------------------------------------------------------------------------
+Reviewer      : Ro
+Date          : 11 March 2026
+Rating        : 3/5
+Title         : Strong taste of ginger/cinnamon...
+Body          : This is listed as 'unflavoured' however has a very strong taste
+                of ginger/cinnamon which has tainted everything I've used it in.
+                I'm not sure what to do with it going forward, I wanted an
+                unflavoured protein that I could put in both sweet and savoury
+                things, but I haven't got it to work with either so far.
+Brand         : BOHO
+Parent ASIN   : B0DHTTF9Z1
+Child ASIN    : B083XZXVX7
+Product       : Boho Unflavoured Organic Vegan Protein Powder Blend (1kg)
+Prod. Rating  : 4.5 (120 reviews)
+Status        : *** CONTACT CUSTOMER ***
+
+================================================================================
+END OF EXPORT | Total Reviews: 10
+================================================================================
