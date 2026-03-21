@@ -378,6 +378,30 @@
     .act-great   { background: #c6f6d5; color: #276749; }
     .act-refund  { background: #fefcbf; color: #744210; }
     .act-contact { background: #fed7d7; color: #c53030; }
+
+    .reviews-toggle {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .reviews-toggle:hover h2 { color: #276749; }
+
+    .toggle-chevron {
+      font-size: 0.9rem;
+      color: #a0aec0;
+      transition: transform 0.25s;
+      margin-left: 4px;
+    }
+
+    .toggle-chevron.open { transform: rotate(180deg); }
+
+    .reviews-table-wrap {
+      transition: opacity 0.2s;
+    }
   </style>
 </head>
 <body>
@@ -660,10 +684,11 @@
   <div id="tab-reviews" class="tab-panel" style="display:none">
 
     <div class="reviews-section">
-      <div class="marketplace-header">
+      <div class="marketplace-header reviews-toggle" onclick="toggleReviews(this)">
         <h2>US Marketplace &mdash; Customer Reviews</h2>
         <span class="badge">amazon.com</span>
         <span style="font-size:0.8rem;color:#718096;margin-left:8px">Pages 1&ndash;2 of 10 &nbsp;&middot;&nbsp; 14 reviews &nbsp;&middot;&nbsp; Captured Mar 21, 2026</span>
+        <span class="toggle-chevron open">&#9660;</span>
       </div>
 
       <div class="reviews-table-wrap">
@@ -883,6 +908,19 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-' + name).style.display = '';
       document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+    }
+
+    function toggleReviews(header) {
+      const wrap = header.closest('.reviews-section').querySelector('.reviews-table-wrap');
+      const chevron = header.querySelector('.toggle-chevron');
+      const isOpen = chevron.classList.contains('open');
+      if (isOpen) {
+        wrap.style.display = 'none';
+        chevron.classList.remove('open');
+      } else {
+        wrap.style.display = '';
+        chevron.classList.add('open');
+      }
     }
   </script>
 
