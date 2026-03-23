@@ -12,24 +12,31 @@ const SCRAPER_API_KEY  = process.env.SCRAPER_API_KEY || 'c595fd63c5eae8f8edd9d57
 const DASHBOARD_PATH   = path.join(__dirname, '..', 'index.html');
 const BASELINES_PATH   = path.join(__dirname, 'scraper-baselines.json');
 
+// ─── ASIN → variant name map (overrides extracted title) ─────────────────────
+// Needed because Amazon product title parentheticals don't always contain flavor names.
+
+const ASIN_VARIANT = {
+  // US
+  'B09S294TGM': 'Chocolate',
+  'B09S2LSQ4D': 'Plain & Unsweetened',
+  'B09S2G3ZPP': 'Plain & Unsweetened',
+  'B09S27FV5F': 'Vanilla',
+  // UK
+  'B081VRSGWF': 'Chocolate',
+  'B07YV7Z931': 'Chocolate',
+  'B09S8VY9HY': 'Vanilla',
+  'B09S8LT67H': 'Vanilla',
+  'B083XZXVX7': 'Boho',
+  'B07MQBK4W9': 'Boho',
+  // DE
+  'B079TP1P3V': 'EarthChamp',
+};
+
 // ─── Scrapers ────────────────────────────────────────────────────────────────
 
-async function scrapeWithAxios(url) {
-  const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1',
-    'Cache-Control': 'max-age=0',
-  };
-  const response = await axios.get(url, { headers, timeout: 15000 });
-  return cheerio.load(response.data);
-}
-
 async function scrapeWithScraperAPI(url) {
-  const countryCode = url.includes('amazon.de') ? 'de' : 'gb';
+  const countryCode = url.includes('amazon.de') ? 'de'
+    : url.includes('amazon.co.uk') ? 'gb' : 'us';
   const scraperUrl  = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(url)}&country_code=${countryCode}&render=true`;
   const response    = await axios.get(scraperUrl, { timeout: 60000 });
   return cheerio.load(response.data);
@@ -59,13 +66,17 @@ function extractFields($) {
 
 async function getProductInfo(url) {
   console.log(`  Fetching: ${url}`);
-  const isNonUS = url.includes('amazon.co.uk') || url.includes('amazon.de');
-  const $ = isNonUS ? await scrapeWithScraperAPI(url) : await scrapeWithAxios(url);
+  const $ = await scrapeWithScraperAPI(url);
   const info = extractFields($);
-  const ratingNum  = parseFloat(info.rating.replace(',', '.'));
-  const countNum   = parseInt(info.reviewCount.replace(/[^0-9]/g, ''), 10);
-  console.log(`    ${info.variant}  —  ${ratingNum} ★  (${countNum.toLocaleString()} ratings)`);
-  return { variant: info.variant, url, rating: ratingNum, count: countNum };
+  const ratingNum = parseFloat(info.rating.replace(',', '.'));
+  const countNum  = parseInt(info.reviewCount.replace(/[^0-9]/g, ''), 10);
+
+  // Use ASIN map to get the correct variant name
+  const asin    = (url.match(/\/dp\/([A-Z0-9]{10})/i) || [])[1] || '';
+  const variant = ASIN_VARIANT[asin] || info.variant;
+
+  console.log(`    ${variant}  —  ${ratingNum} ★  (${countNum.toLocaleString()} ratings)`);
+  return { variant, url, rating: ratingNum, count: countNum };
 }
 
 // ─── Grouping & remapping ─────────────────────────────────────────────────────
@@ -228,20 +239,25 @@ function patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands
 
   let html = fs.readFileSync(DASHBOARD_PATH, 'utf8').replace(/\r\n/g, '\n');
 
-  // Update US product cards
-  html = patch(html, 'US_CARDS', buildCardsHtml(usData.variants, '', 'amazon.com'));
+  // Only patch a section if we actually got data — never wipe with empty results
+  if (usData.variants.length > 0)
+    html = patch(html, 'US_CARDS', buildCardsHtml(usData.variants, '', 'amazon.com'));
+  else
+    console.warn('  US scrape returned no data — skipping US_CARDS update.');
 
-  // Update UK product cards (pre-remap individual variants)
-  html = patch(html, 'UK_CARDS', buildCardsHtml(ukRawVariants, 'uk', 'amazon.co.uk'));
+  if (ukRawVariants.length > 0) {
+    html = patch(html, 'UK_CARDS', buildCardsHtml(ukRawVariants, 'uk', 'amazon.co.uk'));
+    html = patch(html, 'UK_SUMMARY', buildBrandSummaryHtml(ukBrands, lastWeekUK));
+  } else {
+    console.warn('  UK scrape returned no data — skipping UK update.');
+  }
 
-  // Update UK brand summary (remapped brands)
-  html = patch(html, 'UK_SUMMARY', buildBrandSummaryHtml(ukBrands, lastWeekUK));
-
-  // Update DE product cards (pre-remap individual variants)
-  html = patch(html, 'DE_CARDS', buildCardsHtml(deRawVariants, 'de', 'amazon.de'));
-
-  // Update DE brand summary (remapped brands)
-  html = patch(html, 'DE_SUMMARY', buildBrandSummaryHtml(deBrands, lastWeekDE));
+  if (deRawVariants.length > 0) {
+    html = patch(html, 'DE_CARDS', buildCardsHtml(deRawVariants, 'de', 'amazon.de'));
+    html = patch(html, 'DE_SUMMARY', buildBrandSummaryHtml(deBrands, lastWeekDE));
+  } else {
+    console.warn('  DE scrape returned no data — skipping DE update.');
+  }
 
   // Update last-updated timestamp in header
   const now = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'long', timeStyle: 'short' });
