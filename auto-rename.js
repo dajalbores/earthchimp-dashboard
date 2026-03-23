@@ -14,23 +14,39 @@ const MONTHS = {
 };
 
 function parseDate(str) {
-  const m = (str||'').trim().match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
-  if (!m) return '';
-  return m[3] + '-' + (MONTHS[m[2].toLowerCase()]||'01') + '-' + m[1].padStart(2,'0');
+  if (!str) return '';
+  const s = str.trim();
+  // "DD Month YYYY" → UK/DE format
+  let m = s.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+  if (m) return m[3] + '-' + (MONTHS[m[2].toLowerCase()]||'01') + '-' + m[1].padStart(2,'0');
+  // "Month DD, YYYY" or "Month DD YYYY" → US format
+  m = s.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})/);
+  if (m) return m[3] + '-' + (MONTHS[m[1].toLowerCase()]||'01') + '-' + m[2].padStart(2,'0');
+  return '';
 }
 
 function parseStars(str) {
-  const m = (str||'').match(/(\d)/);
+  if (!str) return 5;
+  const stars = ((str).match(/★/g)||[]).length;
+  if (stars > 0) return stars;
+  const m = str.match(/(\d)/);
   return m ? parseInt(m[1], 10) : 5;
 }
 
 function parseStatus(str) {
   const s = (str||'').toLowerCase();
-  if (/\*+\s*contact\s*customer\s*\*+/.test(s)) return 'contact';
+  if (/\*+\s*(offer\s*)?courtesy\s*refund\s*\*+/.test(s)) return 'refund';
+  if (/\*+\s*contact\s*customer\s*\*+/.test(s))            return 'contact';
   if (s.includes('contacted'))  return 'contacted';
   if (s.includes('contact'))    return 'contact';
   if (s.includes('refund'))     return 'refund';
   return 'positive';
+}
+
+function statusFromStars(stars) {
+  if (stars >= 4) return 'positive';
+  if (stars <= 2) return 'refund';
+  return 'contact';
 }
 
 function normalizeProduct(name, brand) {
@@ -38,30 +54,135 @@ function normalizeProduct(name, brand) {
   const b = (brand||'').toLowerCase();
   const n = name.toLowerCase();
 
-  // Third-party brands (BOHO, Farmer Pete's, etc.)
   if (b === 'boho' || n.includes('boho')) {
     const sz = name.match(/(\d+)\s*kg/i);
     return 'BOHO Protein ' + (sz ? sz[1]+'kg' : '1kg');
   }
-  if (n.includes("farmer pete")) {
+  if (n.includes('farmer pete')) {
     const sz = name.match(/(\d+)\s*kg/i);
     return "Farmer Pete's " + (sz ? sz[1]+'kg' : '1kg');
   }
+  if (n.includes('power blend')) {
+    const sz = name.match(/(\d+)\s*kg/i);
+    return 'Power Blend ' + (sz ? sz[1]+'kg' : '1kg');
+  }
 
-  // EarthChimp / EarthChamp products — extract flavor, size, scoop
   let flavor = 'Plain';
-  if (/vanilla/i.test(name))    flavor = 'Vanilla';
+  if (/vanilla/i.test(name))        flavor = 'Vanilla';
   else if (/chocolate/i.test(name)) flavor = 'Chocolate';
 
   let size = '';
-  const sz = name.match(/(\d+)\s*(kg|oz)/i);
-  if (sz) size = sz[1] + sz[2].toLowerCase();
+  const kgOz = name.match(/(\d+)\s*(kg|oz)/i);
+  const lb   = name.match(/(\d+)\s*lb/i);
+  if (kgOz) size = kgOz[1] + kgOz[2].toLowerCase();
+  else if (lb) size = (parseInt(lb[1]) * 16) + ' Oz';
 
   const noScoop = /no scoop|without.*dosing|no.*scoop/i.test(name);
   return [flavor, size, noScoop ? 'No Scoop' : ''].filter(Boolean).join(' ');
 }
 
-// Extract a named field from a text block, handling indented continuation lines
+function extractAsin(str) {
+  const m = (str||'').match(/\b([A-Z0-9]{10})\b/);
+  return m ? m[1] : '';
+}
+
+// ─── Format detection ─────────────────────────────────────────────────────────
+// Three formats exist:
+//   us-star : ★★★★★ | Reviewer on Date / Title / Body / ASIN|Brand|Flavor|Size
+//   us-kv   : REVIEW N / Reviewer: / Date: / Rating: / Title: / Product: / Action: / "body"
+//   standard: Reviewer : / Date : / Rating : / Title : / Body or Comment : / Status :
+
+function detectFormat(content) {
+  if (/★/.test(content.slice(0, 500))) return 'us-star';
+  if (/^Action\s*:/im.test(content))   return 'us-kv';
+  return 'standard';
+}
+
+// ─── US Star format ───────────────────────────────────────────────────────────
+
+function parseUSStarBlocks(content, marketplace) {
+  const reviews = [];
+  const blocks  = content.split(/^-{3,}\s*$/m);
+
+  for (const block of blocks) {
+    const lines = block.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 3) continue;
+
+    // Header: ★★★★★ | Reviewer on Month DD, YYYY
+    const hm = lines[0].match(/^(★+[☆★]*)\s*\|\s*(.+?)\s+on\s+(.+)$/);
+    if (!hm) continue;
+
+    const stars    = (hm[1].match(/★/g)||[]).length;
+    const reviewer = hm[2].trim();
+    const date     = parseDate(hm[3].trim());
+    if (!date) continue;
+
+    // Meta line (last): ASIN | Brand | Flavor | Size | scoop
+    const metaParts = lines[lines.length - 1].split('|').map(p => p.trim());
+    const childAsin = metaParts[0] || '';
+    const flavor    = metaParts[2] || '';
+    const sizeRaw   = metaParts[3] || '';
+    const noScoop   = /no.?scoop/i.test(lines[lines.length - 1]);
+
+    let size = '';
+    const lbM = sizeRaw.match(/(\d+)\s*lb/i);
+    const ozM = sizeRaw.match(/(\d+)\s*oz/i);
+    if (lbM)      size = (parseInt(lbM[1]) * 16) + ' Oz';
+    else if (ozM) size = ozM[1] + ' Oz';
+
+    const product = [flavor, size, noScoop ? 'No Scoop' : ''].filter(Boolean).join(' ');
+    const title   = lines[1];
+    const body    = lines.slice(2, lines.length - 1).join(' ');
+
+    reviews.push({ marketplace, reviewer, date, stars, title, body, product, childAsin,
+      actionStatus: statusFromStars(stars) });
+  }
+  return reviews;
+}
+
+// ─── US Key-Value format ──────────────────────────────────────────────────────
+
+function parseUSKVBlocks(content, marketplace) {
+  const reviews = [];
+  const blocks  = content.split(/^[-=]{3,}\s*$/m);
+
+  for (const block of blocks) {
+    if (!/^Reviewer\s*:/im.test(block)) continue;
+
+    const get = (key) => {
+      const re = new RegExp('^' + key + '\\s*:\\s*(.+)', 'im');
+      const m  = block.match(re);
+      return m ? m[1].trim() : '';
+    };
+
+    const reviewer   = get('Reviewer');
+    if (!reviewer) continue;
+
+    const productRaw = get('Product');
+    const childAsin  = extractAsin(productRaw) || extractAsin(get('Child ASIN'));
+    const productClean = productRaw.replace(/\s*\([A-Z0-9]{10}\)/g, '').trim();
+
+    // Body is text wrapped in quotes
+    const bodyMatch = block.match(/"([\s\S]+?)"/);
+    const body = bodyMatch ? bodyMatch[1].replace(/\s+/g, ' ').trim() : '';
+
+    reviews.push({
+      marketplace,
+      reviewer,
+      date:         parseDate(get('Date')),
+      stars:        parseStars(get('Rating')),
+      title:        get('Title'),
+      body,
+      product:      normalizeProduct(productClean, ''),
+      childAsin,
+      actionStatus: parseStatus(get('Action'))
+    });
+  }
+  return reviews;
+}
+
+// ─── Standard (UK / DE) format ────────────────────────────────────────────────
+
 function getField(block, names) {
   for (const name of names) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -82,31 +203,37 @@ function getField(block, names) {
   return '';
 }
 
-function parseBlock(block, marketplace) {
-  const reviewer = getField(block, ['Reviewer']);
-  if (!reviewer) return null;
-  return {
-    marketplace,
-    reviewer,
-    date:         parseDate(getField(block,  ['Date'])),
-    stars:        parseStars(getField(block, ['Rating'])),
-    title:        getField(block, ['Title']),
-    body:         getField(block, ['Body', 'Comment']),
-    product:      normalizeProduct(getField(block, ['Product']), getField(block, ['Brand'])),
-    childAsin:    getField(block, ['Child ASIN']),
-    actionStatus: parseStatus(getField(block, ['Status']))
-  };
+function parseStandardBlocks(content, marketplace) {
+  const reviews = [];
+  const blocks  = content.split(/^[-=]{3,}\s*$/m);
+  for (const block of blocks) {
+    const reviewer = getField(block, ['Reviewer']);
+    if (!reviewer) continue;
+    const r = {
+      marketplace,
+      reviewer,
+      date:         parseDate(getField(block,  ['Date'])),
+      stars:        parseStars(getField(block, ['Rating'])),
+      title:        getField(block, ['Title']),
+      body:         getField(block, ['Body', 'Comment']),
+      product:      normalizeProduct(getField(block, ['Product']), getField(block, ['Brand'])),
+      childAsin:    getField(block, ['Child ASIN']),
+      actionStatus: parseStatus(getField(block, ['Status']))
+    };
+    if (r.reviewer && r.date && r.title) reviews.push(r);
+  }
+  return reviews;
 }
+
+// ─── Main file parser (auto-detects format) ───────────────────────────────────
 
 function parseTxtFile(filePath, marketplace) {
   const content = fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
-  const blocks  = content.split(/^[-=]{3,}\s*$/m);
-  const reviews = [];
-  for (const block of blocks) {
-    const r = parseBlock(block, marketplace);
-    if (r && r.reviewer && r.date && r.title) reviews.push(r);
-  }
-  return reviews;
+  const fmt     = detectFormat(content);
+  console.log('  Format detected: ' + fmt);
+  if (fmt === 'us-star') return parseUSStarBlocks(content, marketplace);
+  if (fmt === 'us-kv')   return parseUSKVBlocks(content, marketplace);
+  return parseStandardBlocks(content, marketplace);
 }
 
 // ─── HTML injection ───────────────────────────────────────────────────────────
