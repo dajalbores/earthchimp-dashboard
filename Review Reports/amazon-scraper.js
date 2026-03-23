@@ -1,17 +1,19 @@
 // Amazon Product Rating Scraper
-// Scrapes US/UK/DE Amazon listings and auto-generates dashboard.html
+// Scrapes US/UK/DE Amazon listings and patches the ratings/counts in index.html
+// using HTML comment markers — does NOT regenerate the whole file.
 
-const axios = require('axios');
+const axios  = require('axios');
 const cheerio = require('cheerio');
-const fs = require('fs');
-const path = require('path');
+const fs     = require('fs');
+const path   = require('path');
 
-// Load .env for local use; in GitHub Actions the secret is injected directly
 require('dotenv').config();
-const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY || 'c595fd63c5eae8f8edd9d570631860e1';
-const DASHBOARD_PATH = path.join(__dirname, '..', 'index.html');
+const SCRAPER_API_KEY  = process.env.SCRAPER_API_KEY || 'c595fd63c5eae8f8edd9d570631860e1';
+const DASHBOARD_PATH   = path.join(__dirname, '..', 'index.html');
+const BASELINES_PATH   = path.join(__dirname, 'scraper-baselines.json');
 
-// --- Axios scraper for Amazon US ---
+// ─── Scrapers ────────────────────────────────────────────────────────────────
+
 async function scrapeWithAxios(url) {
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -22,444 +24,256 @@ async function scrapeWithAxios(url) {
     'Upgrade-Insecure-Requests': '1',
     'Cache-Control': 'max-age=0',
   };
-
   const response = await axios.get(url, { headers, timeout: 15000 });
-  const $ = cheerio.load(response.data);
+  return cheerio.load(response.data);
+}
 
+async function scrapeWithScraperAPI(url) {
+  const countryCode = url.includes('amazon.de') ? 'de' : 'gb';
+  const scraperUrl  = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(url)}&country_code=${countryCode}&render=true`;
+  const response    = await axios.get(scraperUrl, { timeout: 60000 });
+  return cheerio.load(response.data);
+}
+
+function extractFields($) {
   if ($('title').text().includes('Robot Check') || $('title').text().includes('CAPTCHA')) {
     throw new Error('Amazon blocked the request (CAPTCHA).');
   }
-
   const title =
     $('#productTitle').text().trim() ||
     $('h1.a-size-large').first().text().trim() ||
-    'Could not find title';
-
+    'Unknown';
   const rating =
     $('#acrPopover').attr('title') ||
     $('[data-hook="rating-out-of-text"]').text().trim() ||
-    $('span.a-icon-alt').first().text().trim() ||
-    'Could not find rating';
-
+    $('span.a-icon-alt').first().text().trim() || '';
   const reviewCount =
     $('#acrCustomerReviewText').first().text().trim() ||
-    $('[data-hook="total-review-count"]').first().text().trim() ||
-    'Could not find review count';
+    $('[data-hook="total-review-count"]').first().text().trim() || '0';
 
-  return { title, rating, reviewCount };
+  const variantMatch = title.match(/\(([^)]+)\)/);
+  const variant = variantMatch ? variantMatch[1] : title.split('-')[0].trim();
+
+  return { title, variant, rating, reviewCount };
 }
 
-// --- ScraperAPI scraper for Amazon UK/DE ---
-async function scrapeWithScraperAPI(url) {
-  const countryCode = url.includes('amazon.de') ? 'de' : 'gb';
-  const scraperUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(url)}&country_code=${countryCode}&render=true`;
-  const response = await axios.get(scraperUrl, { timeout: 60000 });
-  const $ = cheerio.load(response.data);
-
-  const title =
-    $('#productTitle').text().trim() ||
-    $('h1.a-size-large').first().text().trim() ||
-    'Could not find title';
-
-  const rating =
-    $('#acrPopover').attr('title') ||
-    $('[data-hook="rating-out-of-text"]').text().trim() ||
-    $('span.a-icon-alt').first().text().trim() ||
-    'Could not find rating';
-
-  const reviewCount =
-    $('#acrCustomerReviewText').first().text().trim() ||
-    $('[data-hook="total-review-count"]').first().text().trim() ||
-    'Could not find review count';
-
-  return { title, rating, reviewCount };
-}
-
-// --- Unified scraper ---
-async function getAmazonProductInfo(url) {
-  console.log(`\nFetching: ${url}`);
-
+async function getProductInfo(url) {
+  console.log(`  Fetching: ${url}`);
   const isNonUS = url.includes('amazon.co.uk') || url.includes('amazon.de');
-  const raw = isNonUS
-    ? await scrapeWithScraperAPI(url)
-    : await scrapeWithAxios(url);
-
-  const variantMatch = raw.title.match(/\(([^)]+)\)/);
-  const variant = variantMatch ? variantMatch[1] : raw.title.split('-')[0].trim();
-
-  return { ...raw, variant, url };
+  const $ = isNonUS ? await scrapeWithScraperAPI(url) : await scrapeWithAxios(url);
+  const info = extractFields($);
+  const ratingNum  = parseFloat(info.rating.replace(',', '.'));
+  const countNum   = parseInt(info.reviewCount.replace(/[^0-9]/g, ''), 10);
+  console.log(`    ${info.variant}  —  ${ratingNum} ★  (${countNum.toLocaleString()} ratings)`);
+  return { variant: info.variant, url, rating: ratingNum, count: countNum };
 }
 
-// --- Merge/rename variants after grouping ---
-// rules: array of { match: string[], label: string }
-// Variants whose names include any match string are merged into one entry with the given label.
-// Unmatched variants pass through unchanged.
-function remapVariants(variants, rules) {
-  const result = [];
-  const used = new Set();
+// ─── Grouping & remapping ─────────────────────────────────────────────────────
 
-  for (const rule of rules) {
-    const matched = variants.filter(v =>
-      rule.match.some(m => v.variant.toLowerCase().includes(m.toLowerCase()))
-    );
-    if (matched.length === 0) continue;
-
-    const totalCount = matched.reduce((sum, v) => sum + v.count, 0);
-    const weightedSum = matched.reduce((sum, v) => sum + v.rating * v.count, 0);
-    result.push({
-      variant: rule.label,
-      urls: matched.flatMap(v => v.urls),
-      count: totalCount,
-      rating: totalCount > 0 ? weightedSum / totalCount : 0,
-    });
-    matched.forEach(v => used.add(v.variant.toLowerCase()));
-  }
-
-  // Pass through variants not covered by any rule
-  for (const v of variants) {
-    if (!used.has(v.variant.toLowerCase())) result.push(v);
-  }
-
-  return result;
-}
-
-// --- Group products by variant name, combining ratings/counts ---
 function groupByVariant(products) {
   const groups = {};
   for (const p of products) {
     const key = p.variant.toLowerCase().trim();
-    if (!groups[key]) {
-      groups[key] = { variant: p.variant, urls: [], totalCount: 0, weightedSum: 0 };
-    }
+    if (!groups[key]) groups[key] = { variant: p.variant, urls: [], totalCount: 0, weightedSum: 0 };
     groups[key].urls.push(p.url);
     groups[key].totalCount += p.count;
     groups[key].weightedSum += p.rating * p.count;
   }
   return Object.values(groups).map(g => ({
-    variant: g.variant,
-    urls: g.urls,
-    count: g.totalCount,
-    rating: g.totalCount > 0 ? g.weightedSum / g.totalCount : 0,
+    variant:      g.variant,
+    urls:         g.urls,
+    count:        g.totalCount,
+    rating:       g.totalCount > 0 ? g.weightedSum / g.totalCount : 0,
+    variantCount: 1,
   }));
 }
 
-// --- Scrape a group of URLs, return structured data ---
-async function scrapeGroup(urls, label) {
-  const products = [];
+function remapVariants(variants, rules) {
+  const result = [];
+  const used   = new Set();
+  for (const rule of rules) {
+    const matched = variants.filter(v =>
+      rule.match.some(m => v.variant.toLowerCase().includes(m.toLowerCase()))
+    );
+    if (matched.length === 0) continue;
+    const totalCount  = matched.reduce((s, v) => s + v.count, 0);
+    const weightedSum = matched.reduce((s, v) => s + v.rating * v.count, 0);
+    result.push({
+      variant:      rule.label,
+      urls:         matched.flatMap(v => v.urls),
+      count:        totalCount,
+      rating:       totalCount > 0 ? weightedSum / totalCount : 0,
+      variantCount: matched.length,
+    });
+    matched.forEach(v => used.add(v.variant.toLowerCase()));
+  }
+  for (const v of variants) {
+    if (!used.has(v.variant.toLowerCase())) result.push(v);
+  }
+  return result;
+}
 
+async function scrapeGroup(urls, label) {
+  console.log(`\nScraping ${label}...`);
+  const products = [];
   for (const url of urls) {
     try {
-      const info = await getAmazonProductInfo(url);
-      console.log('=== Amazon Product Info ===');
-      console.log(`URL:          ${info.url}`);
-      console.log(`Title:        ${info.title}`);
-      console.log(`Variant:      ${info.variant}`);
-      console.log(`Star Rating:  ${info.rating}`);
-      console.log(`Review Count: ${info.reviewCount}`);
-      console.log('');
-
-      const ratingNum = parseFloat(info.rating.replace(',', '.'));
-      const countNum = parseInt(info.reviewCount.replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(ratingNum) && !isNaN(countNum)) {
-        products.push({ variant: info.variant, url, rating: ratingNum, count: countNum });
-      }
-    } catch (err) {
-      console.error(`Failed for ${url}: ${err.message}\n`);
+      const p = await getProductInfo(url);
+      if (!isNaN(p.rating) && !isNaN(p.count)) products.push(p);
+    } catch (e) {
+      console.error(`  Failed: ${url} — ${e.message}`);
     }
   }
-
-  const variants = groupByVariant(products);
-  const totalReviews = variants.reduce((sum, v) => sum + v.count, 0);
-  const weightedSum = variants.reduce((sum, v) => sum + v.rating * v.count, 0);
-  const weightedAvg = totalReviews > 0 ? weightedSum / totalReviews : 0;
-
-  console.log(`=== Summary: ${label} ===`);
-  console.log(`${label} Total Reviews:           ${totalReviews.toLocaleString()}`);
-  console.log(`${label} Weighted Average Rating: ${weightedAvg.toFixed(2)} out of 5 stars\n`);
-
+  const variants      = groupByVariant(products);
+  const totalReviews  = variants.reduce((s, v) => s + v.count, 0);
+  const weightedSum   = variants.reduce((s, v) => s + v.rating * v.count, 0);
+  const weightedAvg   = totalReviews > 0 ? weightedSum / totalReviews : 0;
+  console.log(`  → ${label}: ${totalReviews.toLocaleString()} total ratings, ${weightedAvg.toFixed(2)} ★ avg`);
   return { label, variants, totalReviews, weightedAvg };
 }
 
-// --- Generate HTML dashboard from scraped data ---
-function generateDashboard(marketplaces) {
-  const now = new Date().toLocaleString('en-PH', {
-    timeZone: 'Asia/Manila',
-    dateStyle: 'long',
-    timeStyle: 'short',
-  });
+// ─── Baselines (for week-over-week delta) ────────────────────────────────────
 
-  function renderMarketplace(mp) {
-    const cls = mp.cssClass ? ` ${mp.cssClass}` : '';
+function loadBaselines() {
+  if (!fs.existsSync(BASELINES_PATH)) return {};
+  return JSON.parse(fs.readFileSync(BASELINES_PATH, 'utf8'));
+}
 
-    const cardsHtml = mp.data.variants.map(v => {
-      const ratingDisplay = v.rating.toFixed(1);
-      const countDisplay = v.count.toLocaleString('en-US');
-      const urlsHtml = v.urls.map(u => {
-        const asin = u.split('/dp/')[1] || u;
-        const domain = u.includes('amazon.co.uk') ? 'amazon.co.uk'
-          : u.includes('amazon.de') ? 'amazon.de'
-          : 'amazon.com';
-        return `        <a class="url-link" href="${u}" target="_blank">${domain}/dp/${asin}</a>`;
-      }).join('\n');
+function saveBaselines(data) {
+  fs.writeFileSync(BASELINES_PATH, JSON.stringify(data, null, 2), 'utf8');
+}
 
-      return `
-      <div class="card${cls}">
+function isMonday() {
+  return new Date().getDay() === 1;
+}
+
+// ─── HTML patching helpers ────────────────────────────────────────────────────
+
+function patch(html, marker, content) {
+  const start = `<!-- ${marker}_START -->`;
+  const end   = `<!-- ${marker}_END -->`;
+  if (!html.includes(start)) {
+    console.warn(`  Warning: marker ${start} not found in index.html`);
+    return html;
+  }
+  return html.replace(
+    new RegExp(`<!-- ${marker}_START -->[\\s\\S]*?<!-- ${marker}_END -->`),
+    `${start}\n${content}\n      ${end}`
+  );
+}
+
+function buildCardsHtml(variants, cssClass, domain) {
+  return variants.map(v => {
+    const cls      = cssClass ? ` ${cssClass}` : '';
+    const urlsHtml = v.urls.map(u => {
+      const asin = u.split('/dp/')[1] || u;
+      return `        <a class="url-link" href="${u}" target="_blank">${domain}/dp/${asin}</a>`;
+    }).join('\n');
+    return `      <div class="card${cls}">
         <div class="variant">${v.variant}</div>
         <div class="stars">
           <span class="star-icons">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-          <span class="rating-num">${ratingDisplay}</span>
+          <span class="rating-num">${v.rating.toFixed(1)}</span>
           <span class="rating-max">/ 5</span>
         </div>
-        <div class="review-count"><span>${countDisplay}</span> ratings</div>
+        <div class="review-count"><span>${v.count.toLocaleString('en-US')}</span> ratings</div>
 ${urlsHtml}
       </div>`;
-    }).join('\n');
-
-    const totalDisplay = mp.data.totalReviews.toLocaleString('en-US');
-    const avgDisplay = mp.data.weightedAvg.toFixed(1);
-    const variantWord = mp.data.variants.length === 1 ? 'variant' : 'variants';
-
-    return `
-  <!-- ===== ${mp.title.toUpperCase()} ===== -->
-  <div class="marketplace">
-    <div class="marketplace-header">
-      <h2>${mp.title}</h2>
-      <span class="badge${cls}">${mp.badge}</span>
-    </div>
-    <div class="cards-grid">
-${cardsHtml}
-    </div>
-    <div class="summary${cls}">
-      <h3>${mp.summaryLabel} &mdash; Overall Summary</h3>
-      <div class="summary-stats">
-        <div class="stat-block">
-          <div class="label">Weighted Average Rating</div>
-          <div class="value">${avgDisplay} &#9733;</div>
-          <div class="sub">out of 5 stars</div>
-        </div>
-        <div class="stat-block">
-          <div class="label">Total Customer Reviews</div>
-          <div class="value">${totalDisplay}</div>
-          <div class="sub">across ${mp.data.variants.length} ${variantWord}</div>
-        </div>
-      </div>
-    </div>
-  </div>`;
-  }
-
-  const sectionsHtml = marketplaces.map(renderMarketplace).join('\n');
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EarthChimp Marketplace Dashboard</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f0f4f8;
-      color: #2d3748;
-      min-height: 100vh;
-      padding: 32px 20px;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 48px;
-    }
-
-    header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1a202c;
-    }
-
-    header p {
-      margin-top: 6px;
-      font-size: 0.95rem;
-      color: #718096;
-    }
-
-    /* Marketplace Section */
-    .marketplace {
-      max-width: 1100px;
-      margin: 0 auto 56px;
-    }
-
-    .marketplace-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-
-    .marketplace-header h2 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #1a202c;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #48bb78;
-      color: white;
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 4px 12px;
-      border-radius: 999px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .badge.uk { background: #4299e1; }
-    .badge.de { background: #e53e3e; }
-
-    /* Cards */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 22px 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      border-top: 4px solid #68d391;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .card.uk { border-top-color: #63b3ed; }
-    .card.de { border-top-color: #fc8181; }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.11);
-    }
-
-    .card .variant {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #276749;
-      margin-bottom: 14px;
-    }
-
-    .card.uk .variant { color: #2b6cb0; }
-    .card.de .variant { color: #c53030; }
-
-    .card .stars {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .star-icons { color: #f6ad55; font-size: 1.1rem; letter-spacing: 1px; }
-
-    .rating-num { font-size: 1.4rem; font-weight: 700; color: #2d3748; }
-
-    .rating-max { font-size: 0.85rem; color: #a0aec0; }
-
-    .review-count { font-size: 0.9rem; color: #4a5568; margin-top: 4px; }
-
-    .review-count span { font-weight: 700; color: #2b6cb0; }
-
-    .card .url-link {
-      display: block;
-      margin-top: 10px;
-      font-size: 0.76rem;
-      color: #63b3ed;
-      text-decoration: none;
-      word-break: break-all;
-    }
-
-    .card .url-link:hover { text-decoration: underline; }
-
-    /* Summary Bar */
-    .summary {
-      border-radius: 14px;
-      padding: 28px 36px;
-      color: white;
-      box-shadow: 0 4px 20px rgba(39, 103, 73, 0.25);
-      background: linear-gradient(135deg, #276749, #48bb78);
-    }
-
-    .summary.uk {
-      background: linear-gradient(135deg, #2b4c7e, #4299e1);
-      box-shadow: 0 4px 20px rgba(43, 76, 126, 0.25);
-    }
-
-    .summary.de {
-      background: linear-gradient(135deg, #9b2c2c, #e53e3e);
-      box-shadow: 0 4px 20px rgba(155, 44, 44, 0.25);
-    }
-
-    .summary h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 20px;
-      opacity: 0.85;
-    }
-
-    .summary-stats { display: flex; gap: 48px; flex-wrap: wrap; }
-
-    .stat-block .label {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      opacity: 0.8;
-      margin-bottom: 6px;
-    }
-
-    .stat-block .value {
-      font-size: 2.2rem;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .stat-block .sub {
-      font-size: 0.82rem;
-      opacity: 0.72;
-      margin-top: 4px;
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 0.8rem;
-      color: #a0aec0;
-    }
-  </style>
-</head>
-<body>
-
-  <header>
-    <h1>EarthChimp Product Dashboard</h1>
-    <p>Amazon Ratings &amp; Reviews &mdash; Last updated: ${now} (PHT)</p>
-  </header>
-${sectionsHtml}
-
-  <footer>
-    Data sourced from Amazon.com, Amazon.co.uk &amp; Amazon.de &nbsp;&middot;&nbsp; EarthChimp Marketplace Dashboard
-  </footer>
-
-</body>
-</html>`;
+  }).join('\n\n');
 }
 
-// Hardcoded URLs to scrape
+function buildBrandSummaryHtml(brands, lastWeekBrands) {
+  const parts = [];
+  brands.forEach((b, i) => {
+    const lw       = (lastWeekBrands && lastWeekBrands[b.variant]) || { count: b.count, rating: b.rating };
+    const delta    = b.count - lw.count;
+    const deltaStr = delta >= 0 ? `+${delta.toLocaleString('en-US')}` : delta.toLocaleString('en-US');
+    const vWord    = b.variantCount === 1 ? 'variant' : 'variants';
+    parts.push(`        <div class="brand-group">
+          <div class="brand-label">${b.variant}</div>
+          <div class="brand-stats">
+            <div class="stat-block">
+              <div class="label">Weighted Avg Rating</div>
+              <div class="value">${b.rating.toFixed(1)} &#9733;</div>
+              <div class="sub">out of 5 stars</div>
+              <div class="stat-last-week">Last week &nbsp;${lw.rating.toFixed(1)} &#9733;</div>
+            </div>
+            <div class="stat-block">
+              <div class="label">Total Reviews</div>
+              <div class="value-row">
+                <span class="value">${b.count.toLocaleString('en-US')}</span>
+                <span class="stat-delta">${deltaStr}</span>
+              </div>
+              <div class="sub">across ${b.variantCount} ${vWord}</div>
+              <div class="stat-last-week">Last week &nbsp;${lw.count.toLocaleString('en-US')} reviews</div>
+            </div>
+          </div>
+        </div>`);
+    if (i < brands.length - 1) parts.push('        <div class="brand-divider"></div>');
+  });
+  return parts.join('\n\n');
+}
+
+// ─── Patch dashboard ─────────────────────────────────────────────────────────
+
+function patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands) {
+  if (!fs.existsSync(DASHBOARD_PATH)) {
+    console.error('index.html not found at', DASHBOARD_PATH);
+    return;
+  }
+
+  const baselines    = loadBaselines();
+  const lastWeekUK   = baselines.uk   || {};
+  const lastWeekDE   = baselines.de   || {};
+
+  let html = fs.readFileSync(DASHBOARD_PATH, 'utf8').replace(/\r\n/g, '\n');
+
+  // Update US product cards
+  html = patch(html, 'US_CARDS', buildCardsHtml(usData.variants, '', 'amazon.com'));
+
+  // Update UK product cards (pre-remap individual variants)
+  html = patch(html, 'UK_CARDS', buildCardsHtml(ukRawVariants, 'uk', 'amazon.co.uk'));
+
+  // Update UK brand summary (remapped brands)
+  html = patch(html, 'UK_SUMMARY', buildBrandSummaryHtml(ukBrands, lastWeekUK));
+
+  // Update DE product cards (pre-remap individual variants)
+  html = patch(html, 'DE_CARDS', buildCardsHtml(deRawVariants, 'de', 'amazon.de'));
+
+  // Update DE brand summary (remapped brands)
+  html = patch(html, 'DE_SUMMARY', buildBrandSummaryHtml(deBrands, lastWeekDE));
+
+  // Update last-updated timestamp in header
+  const now = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'long', timeStyle: 'short' });
+  html = html.replace(
+    /<p>Amazon Ratings[^<]*<\/p>/,
+    `<p>Amazon Ratings &amp; Reviews &mdash; Last updated: ${now} (PHT)</p>`
+  );
+
+  fs.writeFileSync(DASHBOARD_PATH, html, 'utf8');
+  console.log('\nDashboard patched successfully.');
+
+  // On Monday: save current as next week's "last week" baseline
+  if (isMonday()) {
+    const newBaselines = {
+      weekStart: new Date().toISOString().split('T')[0],
+      uk: {},
+      de: {},
+    };
+    ukBrands.forEach(b => { newBaselines.uk[b.variant] = { count: b.count, rating: b.rating }; });
+    deBrands.forEach(b => { newBaselines.de[b.variant] = { count: b.count, rating: b.rating }; });
+    saveBaselines(newBaselines);
+    console.log('Baselines saved for next week.');
+  }
+}
+
+// ─── Product URLs ─────────────────────────────────────────────────────────────
+
 const US_URLS = [
   'https://www.amazon.com/dp/B09S294TGM',
   'https://www.amazon.com/dp/B09S2LSQ4D',
-  'https://www.amazon.com/dp/B09S27FV5F',
   'https://www.amazon.com/dp/B09S2G3ZPP',
+  'https://www.amazon.com/dp/B09S27FV5F',
 ];
 
 const UK_URLS = [
@@ -476,46 +290,37 @@ const DE_URLS = [
   'https://www.amazon.de/dp/B07MQBK4W9',
 ];
 
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 async function main() {
   const singleUrl = process.argv[2];
 
   if (singleUrl) {
-    // Single-URL mode: just print product info, no dashboard update
-    const info = await getAmazonProductInfo(singleUrl);
-    console.log('=== Amazon Product Info ===');
-    console.log(`URL:          ${info.url}`);
-    console.log(`Title:        ${info.title}`);
-    console.log(`Variant:      ${info.variant}`);
-    console.log(`Star Rating:  ${info.rating}`);
-    console.log(`Review Count: ${info.reviewCount}`);
-  } else {
-    // Full scrape mode: scrape all marketplaces and regenerate dashboard
-    console.log('Starting full scrape...\n');
-
-    const usData  = await scrapeGroup(US_URLS, 'US EarthChimp');
-    const ukData  = await scrapeGroup(UK_URLS, 'UK EarthChimp');
-    const deData  = await scrapeGroup(DE_URLS, 'DE EarthChimp');
-
-    // UK: merge Chocolate + Vanilla → EarthChamp; keep Boho separate
-    ukData.variants = remapVariants(ukData.variants, [
-      { match: ['chocolate', 'vanilla'], label: 'EarthChamp' },
-    ]);
-
-    // DE: rename Power Blend → EarthChamp
-    deData.variants = remapVariants(deData.variants, [
-      { match: ['power blend'], label: 'EarthChamp' },
-    ]);
-
-    const marketplaces = [
-      { title: 'US Marketplace', badge: 'amazon.com',    cssClass: '',   summaryLabel: 'US EarthChimp', data: usData },
-      { title: 'UK Marketplace', badge: 'amazon.co.uk',  cssClass: 'uk', summaryLabel: 'UK EarthChamp', data: ukData },
-      { title: 'DE Marketplace', badge: 'amazon.de',     cssClass: 'de', summaryLabel: 'DE EarthChamp', data: deData },
-    ];
-
-    const html = generateDashboard(marketplaces);
-    fs.writeFileSync(DASHBOARD_PATH, html, 'utf8');
-    console.log(`\nDashboard updated: ${DASHBOARD_PATH}`);
+    // Single-URL debug mode
+    const p = await getProductInfo(singleUrl);
+    console.log(p);
+    return;
   }
+
+  console.log('Starting full scrape...');
+
+  const usData = await scrapeGroup(US_URLS, 'US EarthChimp');
+  const ukData = await scrapeGroup(UK_URLS, 'UK EarthChimp');
+  const deData = await scrapeGroup(DE_URLS, 'DE EarthChimp');
+
+  // Save pre-remap variants for card display
+  const ukRawVariants = [...ukData.variants];
+  const deRawVariants = [...deData.variants];
+
+  // Remap for brand-level summary
+  const ukBrands = remapVariants(ukData.variants, [
+    { match: ['chocolate', 'vanilla'], label: 'EarthChamp' },
+  ]);
+  const deBrands = remapVariants(deData.variants, [
+    { match: ['power blend', 'earthchamp', 'vegan protein'], label: 'EarthChamp' },
+  ]);
+
+  patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands);
 }
 
 main().catch(err => {
