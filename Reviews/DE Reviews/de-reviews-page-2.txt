@@ -1,0 +1,39 @@
+========================================
+EARTHCHAMP - AMAZON REVIEWS (BATCH 2)
+Extracted: March 2026
+========================================
+
+----------------------------------------
+Review 1
+----------------------------------------
+Reviewer   : Olaf
+Date       : 21 March 2026
+Rating     : 5/5
+Title      : 🔥
+Comment    : Top! Jederzeit gerne wieder! Danke! (Top! Happy to order again anytime! Thank you!)
+Product    : Vegan Protein Powder Power Blend - Only Natural Plant Protein with Fruits and Botanicals - Rich in Iron, Magnesium and Zinc, Free from Gluten, Dairy Products and Lactose
+Brand      : EarthChamp
+Parent ASIN: B09V1NLRYD
+Child ASIN : B079TP1P3V
+Status     : Well done! Reply not needed
+
+----------------------------------------
+Review 2
+----------------------------------------
+Reviewer   : StefanSHamburgo
+Date       : 20 March 2026
+Rating     : 5/5
+Title      : Erstaunlich gut (Amazingly good)
+Comment    : Claims this is the best protein in the world from an American manufacturer. Had it imported expensively to Germany as it was unavailable locally. Found nothing better in Germany — others are too earthy, too thin, or ruined with Stevia. Was initially put off by the packaging but finally tried it. Says it's the best protein currently available in Germany, having tested over 20. It's chocolatey, not too sweet, not artificial, and not earthy. Plans to order vanilla next. Includes a scoop but sometimes uses 3 tablespoons instead of the 2 indicated.
+Product    : Vegan Protein Powder Power Blend - Only Natural Plant Protein with Fruits and Botanicals - Rich in Iron, Magnesium and Zinc, Free from Gluten, Dairy Products and Lactose
+Brand      : EarthChamp
+Parent ASIN: B09V1NLRYD
+Child ASIN : B079TP1P3V
+Status     : Well done! Reply not needed
+
+========================================
+END OF REVIEWS
+Total Reviews: 2
+EarthChamp Reviews: 2
+Negative Reviews (1-2 stars): 0
+========================================
