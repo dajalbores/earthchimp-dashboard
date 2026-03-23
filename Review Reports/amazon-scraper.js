@@ -11,6 +11,7 @@ require('dotenv').config();
 const SCRAPER_API_KEY  = process.env.SCRAPER_API_KEY || 'c595fd63c5eae8f8edd9d570631860e1';
 const DASHBOARD_PATH   = path.join(__dirname, '..', 'index.html');
 const BASELINES_PATH   = path.join(__dirname, 'scraper-baselines.json');
+const LAST_WEEK_PATH   = path.join(__dirname, 'scraper-last-week.json');
 
 // ─── ASIN → variant name map (overrides extracted title) ─────────────────────
 // Needed because Amazon product title parentheticals don't always contain flavor names.
@@ -154,6 +155,15 @@ function saveBaselines(data) {
   fs.writeFileSync(BASELINES_PATH, JSON.stringify(data, null, 2), 'utf8');
 }
 
+function loadLastWeek() {
+  if (!fs.existsSync(LAST_WEEK_PATH)) return {};
+  return JSON.parse(fs.readFileSync(LAST_WEEK_PATH, 'utf8'));
+}
+
+function saveLastWeek(data) {
+  fs.writeFileSync(LAST_WEEK_PATH, JSON.stringify(data, null, 2), 'utf8');
+}
+
 function isMonday() {
   return new Date().getDay() === 1;
 }
@@ -233,9 +243,9 @@ function patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands
     return;
   }
 
-  const baselines    = loadBaselines();
-  const lastWeekUK   = baselines.uk   || {};
-  const lastWeekDE   = baselines.de   || {};
+  const lastWeekData = loadLastWeek();
+  const lastWeekUK   = lastWeekData.uk || {};
+  const lastWeekDE   = lastWeekData.de || {};
 
   let html = fs.readFileSync(DASHBOARD_PATH, 'utf8').replace(/\r\n/g, '\n');
 
@@ -269,17 +279,16 @@ function patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands
   fs.writeFileSync(DASHBOARD_PATH, html, 'utf8');
   console.log('\nDashboard patched successfully.');
 
-  // On Monday: save current as next week's "last week" baseline
+  // On Monday: rotate current baseline → last week, save new current
   if (isMonday()) {
-    const newBaselines = {
-      weekStart: new Date().toISOString().split('T')[0],
-      uk: {},
-      de: {},
-    };
-    ukBrands.forEach(b => { newBaselines.uk[b.variant] = { count: b.count, rating: b.rating }; });
-    deBrands.forEach(b => { newBaselines.de[b.variant] = { count: b.count, rating: b.rating }; });
-    saveBaselines(newBaselines);
-    console.log('Baselines saved for next week.');
+    const newSnapshot = { weekStart: new Date().toISOString().split('T')[0], uk: {}, de: {} };
+    ukBrands.forEach(b => { newSnapshot.uk[b.variant] = { count: b.count, rating: b.rating }; });
+    deBrands.forEach(b => { newSnapshot.de[b.variant] = { count: b.count, rating: b.rating }; });
+    // Move old current → last week before overwriting
+    const oldBaselines = loadBaselines();
+    if (oldBaselines.uk || oldBaselines.de) saveLastWeek(oldBaselines);
+    saveBaselines(newSnapshot);
+    console.log('Baselines rotated — last week saved, new baseline set.');
   }
 }
 
