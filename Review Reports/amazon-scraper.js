@@ -33,6 +33,7 @@ const ASIN_VARIANT = {
   'B079TP1P3V': 'EarthChamp',
   'B07GR9YY6X': 'EarthChamp',
   'B09S8RQ73K': 'EarthChamp',
+  'B083XNPSH1': 'EarthChamp',
 };
 
 // ─── Scrapers ────────────────────────────────────────────────────────────────
@@ -341,7 +342,9 @@ const UK_URLS = [
 
 const DE_URLS = [
   'https://www.amazon.de/dp/B079TP1P3V',   // EarthChamp
+  'https://www.amazon.de/dp/B081VRSGWF',   // EarthChamp Chocolate
   'https://www.amazon.de/dp/B07GR9YY6X',   // EarthChamp Vanilla 1kg
+  'https://www.amazon.de/dp/B083XNPSH1',   // EarthChamp Vanilla 1kg No Scoop
   'https://www.amazon.de/dp/B09S8RQ73K',   // EarthChamp Chocolate 2kg No Scoop
   'https://www.amazon.de/dp/B07MQBK4W9',   // Boho
 ];
