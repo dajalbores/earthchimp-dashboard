@@ -203,6 +203,28 @@ ${urlsHtml}
   }).join('\n\n');
 }
 
+function buildUSSummaryHtml(usData, lastWeekUS) {
+  const lw       = lastWeekUS || { count: usData.totalReviews, rating: usData.weightedAvg };
+  const delta    = usData.totalReviews - lw.count;
+  const deltaStr = delta >= 0 ? `+${delta.toLocaleString('en-US')}` : delta.toLocaleString('en-US');
+  const vWord    = usData.variants.length === 1 ? 'variant' : 'variants';
+  return `        <div class="stat-block">
+          <div class="label">Weighted Average Rating</div>
+          <div class="value">${usData.weightedAvg.toFixed(1)} &#9733;</div>
+          <div class="sub">out of 5 stars</div>
+          <div class="stat-last-week">Last week &nbsp;${lw.rating.toFixed(1)} &#9733;</div>
+        </div>
+        <div class="stat-block">
+          <div class="label">Total Customer Reviews</div>
+          <div class="value-row">
+            <span class="value">${usData.totalReviews.toLocaleString('en-US')}</span>
+            <span class="stat-delta">${deltaStr}</span>
+          </div>
+          <div class="sub">across ${usData.variants.length} ${vWord}</div>
+          <div class="stat-last-week">Last week &nbsp;${lw.count.toLocaleString('en-US')} reviews</div>
+        </div>`;
+}
+
 function buildBrandSummaryHtml(brands, lastWeekBrands) {
   const parts = [];
   brands.forEach((b, i) => {
@@ -244,16 +266,19 @@ function patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands
   }
 
   const lastWeekData = loadLastWeek();
+  const lastWeekUS   = lastWeekData.us || null;
   const lastWeekUK   = lastWeekData.uk || {};
   const lastWeekDE   = lastWeekData.de || {};
 
   let html = fs.readFileSync(DASHBOARD_PATH, 'utf8').replace(/\r\n/g, '\n');
 
   // Only patch a section if we actually got data — never wipe with empty results
-  if (usData.variants.length > 0)
-    html = patch(html, 'US_CARDS', buildCardsHtml(usData.variants, '', 'amazon.com'));
-  else
-    console.warn('  US scrape returned no data — skipping US_CARDS update.');
+  if (usData.variants.length > 0) {
+    html = patch(html, 'US_CARDS',    buildCardsHtml(usData.variants, '', 'amazon.com'));
+    html = patch(html, 'US_SUMMARY',  buildUSSummaryHtml(usData, lastWeekUS));
+  } else {
+    console.warn('  US scrape returned no data — skipping US update.');
+  }
 
   if (ukRawVariants.length > 0) {
     html = patch(html, 'UK_CARDS', buildCardsHtml(ukRawVariants, 'uk', 'amazon.co.uk'));
@@ -281,7 +306,9 @@ function patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands
 
   // On Monday: rotate current baseline → last week, save new current
   if (isMonday()) {
-    const newSnapshot = { weekStart: new Date().toISOString().split('T')[0], uk: {}, de: {} };
+    const newSnapshot = { weekStart: new Date().toISOString().split('T')[0], us: null, uk: {}, de: {} };
+    if (usData.variants.length > 0)
+      newSnapshot.us = { count: usData.totalReviews, rating: usData.weightedAvg };
     ukBrands.forEach(b => { newSnapshot.uk[b.variant] = { count: b.count, rating: b.rating }; });
     deBrands.forEach(b => { newSnapshot.de[b.variant] = { count: b.count, rating: b.rating }; });
     // Move old current → last week before overwriting

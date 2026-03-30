@@ -1,5 +1,9 @@
 {
   "weekStart": "2026-03-30",
+  "us": {
+    "count": 6304,
+    "rating": 4.494241751269036
+  },
   "uk": {
     "EarthChamp": {
       "count": 3377,
@@ -12,8 +16,8 @@
   },
   "de": {
     "EarthChamp": {
-      "count": 1306,
-      "rating": 4.3
+      "count": 0,
+      "rating": 0
     },
     "Boho": {
       "count": 990,
