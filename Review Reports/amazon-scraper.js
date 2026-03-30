@@ -29,8 +29,10 @@ const ASIN_VARIANT = {
   'B09S8LT67H': 'Vanilla',
   'B083XZXVX7': 'Boho',
   'B07MQBK4W9': 'Boho',
-  // DE
+  // DE (no overlap with UK ASINs to avoid overwriting UK variant names)
   'B079TP1P3V': 'EarthChamp',
+  'B07GR9YY6X': 'EarthChamp',
+  'B09S8RQ73K': 'EarthChamp',
 };
 
 // ─── Scrapers ────────────────────────────────────────────────────────────────
@@ -338,8 +340,10 @@ const UK_URLS = [
 ];
 
 const DE_URLS = [
-  'https://www.amazon.de/dp/B079TP1P3V',
-  'https://www.amazon.de/dp/B07MQBK4W9',
+  'https://www.amazon.de/dp/B079TP1P3V',   // EarthChamp
+  'https://www.amazon.de/dp/B07GR9YY6X',   // EarthChamp Vanilla 1kg
+  'https://www.amazon.de/dp/B09S8RQ73K',   // EarthChamp Chocolate 2kg No Scoop
+  'https://www.amazon.de/dp/B07MQBK4W9',   // Boho
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -369,7 +373,7 @@ async function main() {
     { match: ['chocolate', 'vanilla'], label: 'EarthChamp' },
   ]);
   const deBrands = remapVariants(deData.variants, [
-    { match: ['power blend', 'earthchamp', 'vegan protein'], label: 'EarthChamp' },
+    { match: ['power blend', 'earthchamp', 'vegan protein', 'vanilla', 'chocolate'], label: 'EarthChamp' },
   ]);
 
   patchDashboard(usData, ukRawVariants, ukBrands, deRawVariants, deBrands);
