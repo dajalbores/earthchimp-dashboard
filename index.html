@@ -32,6 +32,50 @@
       color: #718096;
     }
 
+    .sync-btn {
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #276749;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 22px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .sync-btn:hover { background: #1e5038; }
+    .sync-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .sync-toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a202c;
+      color: #fff;
+      padding: 11px 22px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .sync-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .sync-toast.success { background: #276749; }
+    .sync-toast.error   { background: #c53030; }
+    .sync-toast.warn    { background: #b7791f; }
+
     /* Marketplace Section */
     .marketplace {
       max-width: 1100px;
@@ -365,7 +409,9 @@
   <header>
     <h1>EarthChimp Product Dashboard</h1>
     <p>Amazon Ratings &amp; Reviews &mdash; Last updated: March 30, 2026 at 11:12 AM (PHT)</p>
+    <button class="sync-btn" id="syncBtn" onclick="syncRatings()">&#8635; Sync Ratings</button>
   </header>
+  <div class="sync-toast" id="syncToast"></div>
 
   <div class="tabs-nav">
     <button class="tab-btn active" data-tab="dashboard" onclick="showTab('dashboard')">Dashboard</button>
@@ -894,6 +940,66 @@
     document.getElementById('rvFSearch').addEventListener('input', rvRender);
 
     rvRender();
+
+    // ── Sync Ratings button ───────────────────────────────────────────────────
+    function showToast(msg, type, duration) {
+      var t = document.getElementById('syncToast');
+      t.textContent = msg;
+      t.className = 'sync-toast ' + (type || '') + ' show';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() { t.className = 'sync-toast'; }, duration || 4000);
+    }
+
+    async function syncRatings() {
+      // Check if today is Monday in Philippine Time
+      var now = new Date();
+      var phtDay = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' })).getDay();
+      if (phtDay !== 1) {
+        showToast('Sync Ratings only runs on Mondays (PHT)', 'warn');
+        return;
+      }
+
+      // Get or prompt for GitHub token
+      var token = localStorage.getItem('gh_sync_token');
+      if (!token) {
+        token = prompt('Enter your GitHub Personal Access Token (stored locally, never sent elsewhere):');
+        if (!token) return;
+        localStorage.setItem('gh_sync_token', token.trim());
+        token = token.trim();
+      }
+
+      var btn = document.getElementById('syncBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Syncing…';
+
+      try {
+        var res = await fetch(
+          'https://api.github.com/repos/dajalbores/earthchimp-dashboard/actions/workflows/scrape.yml/dispatches',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Accept': 'application/vnd.github+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ref: 'main' })
+          }
+        );
+        if (res.status === 204) {
+          showToast('✓ Scraper triggered — dashboard will update in ~2 min', 'success', 5000);
+        } else if (res.status === 401) {
+          localStorage.removeItem('gh_sync_token');
+          showToast('Invalid token — cleared. Try again.', 'error');
+        } else {
+          showToast('GitHub returned status ' + res.status, 'error');
+        }
+      } catch (e) {
+        showToast('Network error: ' + e.message, 'error');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '&#8635; Sync Ratings';
+    }
   </script>
 
 </body>
