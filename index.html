@@ -413,6 +413,8 @@
     .rv-upload-zone.drag{border-color:#52b788;background:#f0faf4}
     .rv-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
     .rv-upload-zone span{pointer-events:none}
+    .rv-upload-clear{display:none;position:absolute;top:6px;right:8px;background:none;border:none;font-size:1rem;color:#a0aec0;cursor:pointer;line-height:1;padding:2px 4px;border-radius:4px;pointer-events:all;z-index:2}
+    .rv-upload-clear:hover{color:#c53030;background:#fff1f0}
     .rv-upload-btn{padding:8px 22px;background:#276749;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
     .rv-upload-btn:hover{background:#1e5038}
     .rv-upload-btn:disabled{opacity:.5;cursor:not-allowed}
@@ -719,6 +721,7 @@
         <div class="rv-upload-zone" id="upZone">
           <input type="file" accept=".txt" id="upFile" onchange="upFileChosen(this)">
           <span id="upZoneLabel">Drop .txt file here or click to browse</span>
+          <button class="rv-upload-clear" id="upClear" onclick="upClearFile(event)" title="Remove file">&#x2715;</button>
         </div>
         <button class="rv-upload-btn" id="upBtn" onclick="upSubmit()" disabled>Upload Reviews</button>
         <div class="rv-upload-result" id="upResult"></div>
@@ -988,14 +991,26 @@
     }
 
     function upFileChosen(input) {
-      var zone = document.getElementById('upZone');
-      var label = document.getElementById('upZoneLabel');
       if (input.files && input.files[0]) {
-        label.textContent = input.files[0].name;
-        zone.classList.add('drag');
+        document.getElementById('upZoneLabel').textContent = input.files[0].name;
+        document.getElementById('upZone').classList.add('drag');
+        document.getElementById('upClear').style.display = 'block';
+        document.getElementById('upFile').style.display = 'none';
         upFileData = input.files[0];
         document.getElementById('upBtn').disabled = false;
       }
+    }
+
+    function upClearFile(e) {
+      e.stopPropagation();
+      upFileData = null;
+      document.getElementById('upFile').value = '';
+      document.getElementById('upFile').style.display = '';
+      document.getElementById('upZoneLabel').textContent = 'Drop .txt file here or click to browse';
+      document.getElementById('upZone').classList.remove('drag');
+      document.getElementById('upClear').style.display = 'none';
+      document.getElementById('upBtn').disabled = true;
+      document.getElementById('upResult').className = 'rv-upload-result';
     }
 
     // Drag-over styling
@@ -1008,6 +1023,8 @@
         var f = e.dataTransfer.files[0];
         if (f && f.name.endsWith('.txt')) {
           document.getElementById('upZoneLabel').textContent = f.name;
+          document.getElementById('upClear').style.display = 'block';
+          document.getElementById('upFile').style.display = 'none';
           upFileData = f;
           document.getElementById('upBtn').disabled = false;
         }
@@ -1223,8 +1240,10 @@
           // Reset upload zone
           upFileData=null;
           document.getElementById('upFile').value='';
+          document.getElementById('upFile').style.display='';
           document.getElementById('upZoneLabel').textContent='Drop .txt file here or click to browse';
           document.getElementById('upZone').classList.remove('drag');
+          document.getElementById('upClear').style.display='none';
         } else {
           var errData=await commitRes.json();
           upSetResult('GitHub error: '+(errData.message||commitRes.status),'err');
