@@ -402,6 +402,24 @@
     .rv-modal-body{font-size:.87rem;color:#4a5568;line-height:1.75;white-space:pre-wrap}
     .rv-modal-footer{margin-top:16px;padding:12px;background:#f7fdf9;border-radius:8px;font-size:.8rem;color:#555;display:flex;flex-direction:column;gap:4px}
     .rv-modal-footer strong{color:#2d6a4f}
+
+    /* ── Upload Reviews ── */
+    .rv-upload-bar{background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .rv-upload-bar label{font-size:.82rem;font-weight:600;color:#4a5568}
+    .rv-upload-mkt{display:flex;gap:6px}
+    .rv-upload-mkt button{padding:5px 16px;border-radius:20px;border:2px solid #e2e8f0;background:#fff;color:#718096;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+    .rv-upload-mkt button.sel{background:#52b788;border-color:#52b788;color:#fff}
+    .rv-upload-zone{flex:1;min-width:220px;border:2px dashed #cbd5e0;border-radius:10px;padding:14px 18px;text-align:center;cursor:pointer;transition:border-color .15s;font-size:.83rem;color:#a0aec0;position:relative}
+    .rv-upload-zone.drag{border-color:#52b788;background:#f0faf4}
+    .rv-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .rv-upload-zone span{pointer-events:none}
+    .rv-upload-btn{padding:8px 22px;background:#276749;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+    .rv-upload-btn:hover{background:#1e5038}
+    .rv-upload-btn:disabled{opacity:.5;cursor:not-allowed}
+    .rv-upload-result{width:100%;font-size:.82rem;padding:8px 12px;border-radius:7px;display:none}
+    .rv-upload-result.ok{background:#c6f6d5;color:#276749;display:block}
+    .rv-upload-result.err{background:#fed7d7;color:#c53030;display:block}
+    .rv-upload-result.info{background:#bee3f8;color:#2a69ac;display:block}
   </style>
 </head>
 <body>
@@ -689,6 +707,23 @@
   <div id="tab-reviews" class="tab-panel" style="display:none">
 
     <div class="rv-wrap">
+
+      <!-- Upload Reviews -->
+      <div class="rv-upload-bar">
+        <label>Marketplace:</label>
+        <div class="rv-upload-mkt">
+          <button id="upMktUS" onclick="upSetMkt('US')" class="sel">US</button>
+          <button id="upMktUK" onclick="upSetMkt('UK')">UK</button>
+          <button id="upMktDE" onclick="upSetMkt('DE')">DE</button>
+        </div>
+        <div class="rv-upload-zone" id="upZone">
+          <input type="file" accept=".txt" id="upFile" onchange="upFileChosen(this)">
+          <span id="upZoneLabel">Drop .txt file here or click to browse</span>
+        </div>
+        <button class="rv-upload-btn" id="upBtn" onclick="upSubmit()" disabled>Upload Reviews</button>
+        <div class="rv-upload-result" id="upResult"></div>
+      </div>
+
       <div class="rv-mkt-bar">
         <button class="rv-mkt-btn" onclick="rvSetMarket('US')">US</button>
         <button class="rv-mkt-btn" onclick="rvSetMarket('UK')">UK</button>
@@ -940,6 +975,265 @@
     document.getElementById('rvFSearch').addEventListener('input', rvRender);
 
     rvRender();
+
+    // ── Upload Reviews ────────────────────────────────────────────────────────
+    var upMkt = 'US';
+    var upFileData = null;
+
+    function upSetMkt(mkt) {
+      upMkt = mkt;
+      ['US','UK','DE'].forEach(function(m) {
+        document.getElementById('upMkt'+m).classList.toggle('sel', m === mkt);
+      });
+    }
+
+    function upFileChosen(input) {
+      var zone = document.getElementById('upZone');
+      var label = document.getElementById('upZoneLabel');
+      if (input.files && input.files[0]) {
+        label.textContent = input.files[0].name;
+        zone.classList.add('drag');
+        upFileData = input.files[0];
+        document.getElementById('upBtn').disabled = false;
+      }
+    }
+
+    // Drag-over styling
+    (function() {
+      var zone = document.getElementById('upZone');
+      zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag'); });
+      zone.addEventListener('dragleave', function() { if (!upFileData) zone.classList.remove('drag'); });
+      zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        var f = e.dataTransfer.files[0];
+        if (f && f.name.endsWith('.txt')) {
+          document.getElementById('upZoneLabel').textContent = f.name;
+          upFileData = f;
+          document.getElementById('upBtn').disabled = false;
+        }
+      });
+    })();
+
+    function upSetResult(msg, type) {
+      var el = document.getElementById('upResult');
+      el.textContent = msg;
+      el.className = 'rv-upload-result ' + type;
+    }
+
+    // ── Parser (ported from process-reviews.js) ───────────────────────────────
+    var UP_MONTHS = {january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',
+      july:'07',august:'08',september:'09',october:'10',november:'11',december:'12'};
+
+    function upParseDate(str) {
+      if (!str) return '';
+      var s = str.trim(), m;
+      m = s.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+      if (m) return m[3]+'-'+(UP_MONTHS[m[2].toLowerCase()]||'01')+'-'+m[1].padStart(2,'0');
+      m = s.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})/);
+      if (m) return m[3]+'-'+(UP_MONTHS[m[1].toLowerCase()]||'01')+'-'+m[2].padStart(2,'0');
+      return '';
+    }
+    function upParseStars(str) {
+      if (!str) return 5;
+      var n = (str.match(/★/g)||[]).length;
+      if (n > 0) return n;
+      var m = str.match(/(\d)/); return m ? parseInt(m[1],10) : 5;
+    }
+    function upParseStatus(str) {
+      var s = (str||'').toLowerCase();
+      if (/\*+\s*(offer\s*)?courtesy\s*refund\s*\*+/.test(s)) return 'refund';
+      if (/\*+\s*contact\s*customer\s*\*+/.test(s)) return 'contact';
+      if (s.includes('contacted')) return 'contacted';
+      if (s.includes('contact'))   return 'contact';
+      if (s.includes('refund'))    return 'refund';
+      return 'positive';
+    }
+    function upStatusFromStars(n) { return n >= 4 ? 'positive' : n <= 2 ? 'refund' : 'contact'; }
+    function upNormProduct(name, brand) {
+      if (!name) return '';
+      var b = (brand||'').toLowerCase(), n = name.toLowerCase();
+      if (b === 'boho' || n.includes('boho')) { var sz=name.match(/(\d+)\s*kg/i); return 'BOHO Protein '+(sz?sz[1]+'kg':'1kg'); }
+      if (n.includes('farmer pete')) { var sz=name.match(/(\d+)\s*kg/i); return "Farmer Pete's "+(sz?sz[1]+'kg':'1kg'); }
+      if (n.includes('power blend')) { var sz=name.match(/(\d+)\s*kg/i); return 'Power Blend '+(sz?sz[1]+'kg':'1kg'); }
+      var flavor = /vanilla/i.test(name) ? 'Vanilla' : /chocolate/i.test(name) ? 'Chocolate' : 'Plain';
+      var kgOz=name.match(/(\d+)\s*(kg|oz)/i), lb=name.match(/(\d+)\s*lb/i), size='';
+      if (kgOz) size=kgOz[1]+kgOz[2].toLowerCase();
+      else if (lb) size=(parseInt(lb[1])*16)+' Oz';
+      var noScoop = /no scoop|without.*dosing|no.*scoop/i.test(name);
+      return [flavor, size, noScoop?'No Scoop':''].filter(Boolean).join(' ');
+    }
+    function upExtractAsin(s) { var m=(s||'').match(/\b([A-Z0-9]{10})\b/); return m?m[1]:''; }
+    function upDetectFmt(c) {
+      if (/★/.test(c.slice(0,500))) return 'us-star';
+      if (/^Action\s*:/im.test(c))  return 'us-kv';
+      return 'standard';
+    }
+    function upParseUSStar(content, mkt) {
+      var out=[], blocks=content.split(/^-{3,}\s*$/m);
+      blocks.forEach(function(block) {
+        var lines=block.trim().split('\n').map(function(l){return l.trim();}).filter(Boolean);
+        if (lines.length < 3) return;
+        var hm=lines[0].match(/^(★+[☆★]*)\s*\|\s*(.+?)\s+on\s+(.+)$/);
+        if (!hm) return;
+        var stars=(hm[1].match(/★/g)||[]).length, reviewer=hm[2].trim(), date=upParseDate(hm[3].trim());
+        if (!date) return;
+        var meta=lines[lines.length-1].split('|').map(function(p){return p.trim();}), childAsin=meta[0]||'', flavor=meta[2]||'', sizeRaw=meta[3]||'';
+        var noScoop=/no.?scoop/i.test(lines[lines.length-1]), size='';
+        var lbM=sizeRaw.match(/(\d+)\s*lb/i), ozM=sizeRaw.match(/(\d+)\s*oz/i);
+        if (lbM) size=(parseInt(lbM[1])*16)+' Oz'; else if (ozM) size=ozM[1]+' Oz';
+        out.push({marketplace:mkt, reviewer, date, stars, title:lines[1],
+          body:lines.slice(2,lines.length-1).join(' '),
+          product:[flavor,size,noScoop?'No Scoop':''].filter(Boolean).join(' '),
+          childAsin, actionStatus:upStatusFromStars(stars)});
+      });
+      return out;
+    }
+    function upParseUSKV(content, mkt) {
+      var out=[], blocks=content.split(/^[-=]{3,}\s*$/m);
+      blocks.forEach(function(block) {
+        if (!/^Reviewer\s*:/im.test(block)) return;
+        function get(k) { var m=block.match(new RegExp('^'+k+'\\s*:\\s*(.+)','im')); return m?m[1].trim():''; }
+        var reviewer=get('Reviewer'); if (!reviewer) return;
+        var productRaw=get('Product'), childAsin=upExtractAsin(productRaw)||upExtractAsin(get('Child ASIN'));
+        var productClean=productRaw.replace(/\s*\([A-Z0-9]{10}\)/g,'').trim();
+        var bodyMatch=block.match(/"([\s\S]+?)"/);
+        out.push({marketplace:mkt, reviewer, date:upParseDate(get('Date')), stars:upParseStars(get('Rating')),
+          title:get('Title'), body:bodyMatch?bodyMatch[1].replace(/\s+/g,' ').trim():'',
+          product:upNormProduct(productClean,''), childAsin, actionStatus:upParseStatus(get('Action'))});
+      });
+      return out;
+    }
+    function upGetField(block, names) {
+      for (var i=0;i<names.length;i++) {
+        var esc=names[i].replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        var re=new RegExp('(?:^|\\n)'+esc+'\\s*:\\s*([^\\n]+)','i'), m=block.match(re);
+        if (!m||!m[1].trim()) continue;
+        var val=m[1].trim(), afterPos=block.indexOf(m[0])+m[0].length;
+        block.slice(afterPos).split('\n').every(function(line) {
+          if (!line.trim()) return false;
+          if (/^\s{2,}/.test(line) && !/^\s*[\w][\w\s.]*\s*:/.test(line)) { val+=' '+line.trim(); return true; }
+          return false;
+        });
+        return val.replace(/\s+/g,' ').trim();
+      }
+      return '';
+    }
+    function upParseStandard(content, mkt) {
+      var out=[], blocks=content.split(/^[-=]{3,}\s*$/m);
+      blocks.forEach(function(block) {
+        var reviewer=upGetField(block,['Reviewer']); if (!reviewer) return;
+        var r={marketplace:mkt, reviewer, date:upParseDate(upGetField(block,['Date'])),
+          stars:upParseStars(upGetField(block,['Rating'])), title:upGetField(block,['Title']),
+          body:upGetField(block,['Body','Comment']),
+          product:upNormProduct(upGetField(block,['Product']),upGetField(block,['Brand'])),
+          childAsin:upGetField(block,['Child ASIN']), actionStatus:upParseStatus(upGetField(block,['Status']))};
+        if (r.reviewer && r.date && r.title) out.push(r);
+      });
+      return out;
+    }
+    function upParseTxt(content, mkt) {
+      var fmt=upDetectFmt(content);
+      if (fmt==='us-star') return upParseUSStar(content, mkt);
+      if (fmt==='us-kv')   return upParseUSKV(content, mkt);
+      return upParseStandard(content, mkt);
+    }
+
+    // ── GitHub commit ─────────────────────────────────────────────────────────
+    var GH_REPO = 'dajalbores/earthchimp-dashboard';
+
+    function upEsc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/"/g,'\\"'); }
+    function upReviewToJs(r, id) {
+      return '      {id:'+id+',marketplace:"'+r.marketplace+'"'
+        +',reviewer:"'+upEsc(r.reviewer)+'"'
+        +',date:"'+r.date+'"'
+        +',stars:'+r.stars
+        +',title:"'+upEsc(r.title)+'"'
+        +',body:"'+upEsc(r.body)+'"'
+        +',product:"'+upEsc(r.product)+'"'
+        +',childAsin:"'+r.childAsin+'"'
+        +',actionStatus:"'+r.actionStatus+'"}';
+    }
+    function upGetNextId(html) {
+      var max=0, re=/\{id:(\d+),/g, m;
+      while ((m=re.exec(html))!==null) max=Math.max(max,parseInt(m[1],10));
+      return max+1;
+    }
+    function upGetExistingKeys(html) {
+      var keys=new Set(), re=/reviewer:"([^"]+)",date:"([^"]+)"[^}]*?title:"([^"]+)"/g, m;
+      while ((m=re.exec(html))!==null) keys.add(m[1]+'|'+m[2]+'|'+m[3]);
+      return keys;
+    }
+    function upInjectIntoHtml(html, newReviews) {
+      var existing=upGetExistingKeys(html);
+      var toAdd=newReviews.filter(function(r){ return !existing.has(r.reviewer+'|'+r.date+'|'+r.title); });
+      if (toAdd.length===0) return { html, added: 0 };
+      var nextId=upGetNextId(html);
+      var lines=toAdd.map(function(r){ return upReviewToJs(r,nextId++); });
+      var marker='}\n    ];', idx=html.lastIndexOf(marker);
+      if (idx===-1) throw new Error('Cannot find reviews array marker in index.html');
+      html=html.slice(0,idx+1)+',\n'+lines.join(',\n')+'\n    ];'+html.slice(idx+marker.length);
+      return { html, added: toAdd.length };
+    }
+
+    async function upSubmit() {
+      if (!upFileData) return;
+      var token=localStorage.getItem('gh_sync_token');
+      if (!token) {
+        token=prompt('Enter your GitHub Personal Access Token:');
+        if (!token) return;
+        localStorage.setItem('gh_sync_token', token.trim());
+        token=token.trim();
+      }
+      var btn=document.getElementById('upBtn');
+      btn.disabled=true; btn.textContent='Uploading…';
+      upSetResult('Reading file…','info');
+      try {
+        // Read file
+        var content=await upFileData.text();
+        content=content.replace(/\r\n/g,'\n');
+        var parsed=upParseTxt(content, upMkt);
+        if (parsed.length===0) { upSetResult('No reviews found in this file.','err'); btn.disabled=false; btn.textContent='Upload Reviews'; return; }
+        upSetResult('Parsed '+parsed.length+' review(s). Fetching current dashboard…','info');
+
+        // Get current index.html from GitHub
+        var ghRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/index.html',
+          { headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'} });
+        if (ghRes.status===401) { localStorage.removeItem('gh_sync_token'); upSetResult('Invalid token — cleared. Try again.','err'); btn.disabled=false; btn.textContent='Upload Reviews'; return; }
+        var ghData=await ghRes.json();
+        var currentHtml=decodeURIComponent(escape(atob(ghData.content.replace(/\n/g,''))));
+        var sha=ghData.sha;
+
+        // Inject reviews
+        var result=upInjectIntoHtml(currentHtml, parsed);
+        if (result.added===0) { upSetResult('All '+parsed.length+' review(s) already exist in the dashboard.','info'); btn.disabled=false; btn.textContent='Upload Reviews'; return; }
+        upSetResult('Adding '+result.added+' new review(s). Committing…','info');
+
+        // Commit back
+        var newContent=btoa(unescape(encodeURIComponent(result.html)));
+        var commitRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/index.html',{
+          method:'PUT',
+          headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+          body:JSON.stringify({ message:'Add '+result.added+' '+upMkt+' review(s) via dashboard upload', content:newContent, sha:sha })
+        });
+        if (commitRes.ok) {
+          upSetResult('✓ '+result.added+' new review(s) added and pushed to GitHub!','ok');
+          // Update local reviews array so table refreshes immediately
+          var match=result.html.match(/var reviews = \[([\s\S]*?)\n    \];/);
+          if (match) { try { eval('reviews=['+match[1]+']'); rvRender(); } catch(e){} }
+          // Reset upload zone
+          upFileData=null;
+          document.getElementById('upFile').value='';
+          document.getElementById('upZoneLabel').textContent='Drop .txt file here or click to browse';
+          document.getElementById('upZone').classList.remove('drag');
+        } else {
+          var errData=await commitRes.json();
+          upSetResult('GitHub error: '+(errData.message||commitRes.status),'err');
+        }
+      } catch(e) {
+        upSetResult('Error: '+e.message,'err');
+      }
+      btn.disabled=false; btn.textContent='Upload Reviews';
+    }
 
     // ── Sync Ratings button ───────────────────────────────────────────────────
     function showToast(msg, type, duration) {
